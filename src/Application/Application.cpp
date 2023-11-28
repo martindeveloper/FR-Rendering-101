@@ -16,6 +16,11 @@ Application::Application(struct EntrypointPayload payload)
 
 Application::~Application()
 {
+    // Unregister window class
+    BOOL isClassUnregistered = UnregisterClassW(this->WindowProperties.ComClassName, this->WindowProperties.WindowInstanceHandle);
+
+    // Unload cursor
+    BOOL isCursorDestroyed = DestroyCursor(this->WindowProperties.CursorHandle);
 }
 
 LRESULT CALLBACK Application::WindowProcedureStatic(HWND windowHandle, UINT messageId, WPARAM wParam, LPARAM lParam)
