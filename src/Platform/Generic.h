@@ -16,4 +16,12 @@
 #pragma message("Platform.Generic: Build type is Release")
 #endif
 
+// Detect platform
+#if defined(_WIN32) || defined(_WIN64)
+#define PLATFORM_WINDOWS
+#define PLATFORM_NAME "Windows"
+#else
+#pragma error("Platform.Generic: Unsupported platform")
+#endif
+
 #endif // PLATFORM_GENERIC_H
