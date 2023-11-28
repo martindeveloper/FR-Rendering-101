@@ -18,6 +18,7 @@ struct ApplicationWindowProperties
     // Win32 handles
     HINSTANCE WindowInstanceHandle;
     HWND WindowHandle;
+    HCURSOR CursorHandle;
 };
 
 class Application

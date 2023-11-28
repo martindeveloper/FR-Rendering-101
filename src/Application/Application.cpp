@@ -9,6 +9,9 @@ Application::Application(struct EntrypointPayload payload)
     this->WindowProperties.Size.Width = 1024;
     this->WindowProperties.Size.Height = 768;
     this->WindowProperties.WindowInstanceHandle = payload.hInstance;
+
+    // Load default, arrow, cursor
+    this->WindowProperties.CursorHandle = LoadCursorW(NULL, IDC_ARROW);
 }
 
 Application::~Application()
@@ -19,50 +22,63 @@ LRESULT CALLBACK Application::WindowProcedureStatic(HWND windowHandle, UINT mess
 {
     // Get application instance
     // Keep in mind this is "this" pointer, which has access to all class members
-    Application* applicationThis = nullptr;
-    
+    Application *applicationThis = nullptr;
+
     // Check if window is being created
     if (messageId == WM_NCCREATE)
     {
-        CREATESTRUCT* pCreate = (CREATESTRUCT*)lParam;
+        CREATESTRUCT *createOptions = (CREATESTRUCT *)lParam;
 
         // Extract application instance from window creation data and associate it with window handle
-        applicationThis = (Application*)pCreate->lpCreateParams;
+        applicationThis = (Application *)createOptions->lpCreateParams;
         SetWindowLongPtr(windowHandle, GWLP_USERDATA, (LONG_PTR)applicationThis);
 
         applicationThis->WindowProperties.WindowHandle = windowHandle;
-	}
+    }
     else
     {
-		applicationThis = (Application*)GetWindowLongPtr(windowHandle, GWLP_USERDATA);
-	}
+        applicationThis = (Application *)GetWindowLongPtr(windowHandle, GWLP_USERDATA);
+    }
 
     if (applicationThis)
     {
-		return applicationThis->HandleWindowMessage(windowHandle, messageId, wParam, lParam);
-	}
+        return applicationThis->HandleWindowMessage(windowHandle, messageId, wParam, lParam);
+    }
 
     // Should mostly happen only for WM_GETMINMAXINFO and WM_NCCREATE
-	return DefWindowProc(windowHandle, messageId, wParam, lParam);
+    return DefWindowProc(windowHandle, messageId, wParam, lParam);
 }
 
 LRESULT Application::HandleWindowMessage(HWND windowHandle, UINT messageId, WPARAM wParam, LPARAM lParam)
 {
-    // Handle window messages
     switch (messageId)
     {
     case WM_DESTROY:
+    {
         PostQuitMessage(0);
 
-        return 0;
+        return 1;
+    }
+    break;
 
     case WM_PAINT:
-        PAINTSTRUCT ps;
-        HDC hdc = BeginPaint(windowHandle, &ps);
-        FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
-        EndPaint(windowHandle, &ps);
+    {
+        PAINTSTRUCT paintOptions;
+        HDC deviceContextHandle = BeginPaint(windowHandle, &paintOptions);
+        FillRect(deviceContextHandle, &paintOptions.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+        EndPaint(windowHandle, &paintOptions);
 
-        return 0;
+        return 1;
+    }
+    break;
+
+    case WM_SETCURSOR:
+    {
+        SetCursor(this->WindowProperties.CursorHandle);
+
+        return 1;
+        break;
+    }
     }
 
     return DefWindowProc(windowHandle, messageId, wParam, lParam);
