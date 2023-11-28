@@ -10,15 +10,24 @@
       "problemMatcher": []
     },
     {
-      "label": "CMake Build",
+      "label": "CMake Build Debug",
       "type": "shell",
       "command": "cmake",
-      "args": ["--build", "build/"],
+      "args": ["--build", "build/", "--config", "Debug"],
       "dependsOn": ["CMake Configure"],
       "group": {
         "kind": "build",
         "isDefault": true
       },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "CMake Build Release",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "build/", "--config", "Release"],
+      "dependsOn": ["CMake Configure"],
+      "group": "build",
       "problemMatcher": ["$msCompile"]
     },
     {
@@ -33,6 +42,11 @@
       "label": "Run Debug",
       "type": "shell",
       "command": "build/Debug/FlyingRatRendering101.exe"
+    },
+    {
+      "label": "Run Release",
+      "type": "shell",
+      "command": "build/Release/FlyingRatRendering101.exe"
     }
   ]
 }

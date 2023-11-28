@@ -1,3 +1,7 @@
 {
-  "recommendations": ["twxs.cmake"]
+  "recommendations": [
+    "twxs.cmake",
+    "ms-vscode.cpptools",
+    "ms-vscode.cpptools-extension-pack"
+  ]
 }

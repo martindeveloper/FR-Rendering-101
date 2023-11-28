@@ -10,11 +10,11 @@
 #include <windows.h>
 #include <tchar.h>
 
-// Create native string LPCWSTR
+// Create native string LPCWSTR - wchar_t*
 #define STRING_NATIVE_WIDE(str) L##str
 #define STRING_NATIVE_WIDE_LEN(str) (sizeof(str) / sizeof(str[0]))
 
-// Create native string LPSTR
+// Create native string LPSTR - char*
 #define STRING_NATIVE_ANSI(str) str
 #define STRING_NATIVE_ANSI_LEN(str) (sizeof(str) / sizeof(str[0]))
 
@@ -22,11 +22,12 @@
 #ifdef UNICODE
 #define STRING_NATIVE(str) STRING_NATIVE_WIDE(str)
 #define STRING_NATIVE_LEN(str) STRING_NATIVE_WIDE_LEN(str)
-#pragma message("Platform.Windows.OS - Using UNICODE")
+
+#pragma message("Platform.Windows.OS: Using UNICODE (Wide) types")
 #else
 #define STRING_NATIVE(str) STRING_NATIVE_ANSI(str)
 #define STRING_NATIVE_LEN(str) STRING_NATIVE_ANSI_LEN(str)
-#pragma message("Platform.Windows.OS - Using ANSI")
+#pragma message("Platform.Windows.OS: Using ANSI ")
 #endif
 
 // Print last error
@@ -49,13 +50,12 @@
     }
 
 // Fatal error
-#define ERROR_FATAL(msg)         \
-    {                            \
-        OutputDebugStringA(msg); \
-        OutputDebugStringA("\n");\
-        PRINT_LAST_ERROR();      \
-        return 0;                \
+#define ERROR_FATAL(msg)          \
+    {                             \
+        OutputDebugStringA(msg);  \
+        OutputDebugStringA("\n"); \
+        PRINT_LAST_ERROR();       \
+        return 0;                 \
     }
-
 
 #endif // PLATFORM_WINDOWS_OS_H

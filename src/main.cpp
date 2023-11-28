@@ -1,6 +1,8 @@
+#include "Platform/Generic.h"
 #include "Platform/Windows/Windows.h"
 #include "Application/Application.h"
 
+// Windows entry point
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPSTR pCmdLine, _In_ int nCmdShow)
 {
     // Entry point payload
