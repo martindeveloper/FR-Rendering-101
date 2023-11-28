@@ -5,9 +5,16 @@
 
 // Windows headers
 #define WIN32_LEAN_AND_MEAN
+#define WIN32_NO_STATUS
+#define VC_EXTRALEAN
 #define NOMINMAX
+#define NOCOMM
+#define NOSERVICE
+#define NOHELP
 #define UNICODE
 #include <windows.h>
+#undef WIN32_NO_STATUS
+
 #include <tchar.h>
 
 // Create native string LPCWSTR - wchar_t*
