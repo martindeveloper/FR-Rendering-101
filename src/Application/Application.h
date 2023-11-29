@@ -2,29 +2,14 @@
 
 #include "../Platform/Windows/Windows.h"
 #include "../Platform/Windows/Entrypoint.h"
-
-struct ApplicationWindowProperties
-{
-    LPCWSTR Title;
-    LPCWSTR ComClassName;
-    int WindowShowStyle;
-
-    struct Size
-    {
-        int Width;
-        int Height;
-    } Size;
-
-    // Win32 handles
-    HINSTANCE WindowInstanceHandle;
-    HWND WindowHandle;
-    HCURSOR CursorHandle;
-};
+#include "Window/ApplicationWindow.h"
+#include "ApplicationWindowProperties.h"
 
 class Application
 {
 private:
-    ApplicationWindowProperties WindowProperties;
+    ApplicationWindow *Window = nullptr;
+    ApplicationWindowProperties *WindowProperties = nullptr;
 
 public:
     Application(EntrypointPayload payload);

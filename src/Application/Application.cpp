@@ -1,26 +1,34 @@
+#include "../Platform/Platform.h"
+
 #include "Application.h"
 
 Application::Application(struct EntrypointPayload payload)
 {
-    this->WindowProperties = {};
-    this->WindowProperties.Title = STRING_NATIVE("Flying Rat Rendering 101");
-    this->WindowProperties.ComClassName = STRING_NATIVE("FlyingRatRendering101");
-    this->WindowProperties.WindowShowStyle = payload.nCmdShow;
-    this->WindowProperties.Size.Width = 1024;
-    this->WindowProperties.Size.Height = 768;
-    this->WindowProperties.WindowInstanceHandle = payload.hInstance;
+    this->WindowProperties = new ApplicationWindowProperties();
+    this->WindowProperties->Title = STRING_NATIVE("Flying Rat Rendering 101");
+    this->WindowProperties->ComClassName = STRING_NATIVE("FlyingRatRendering101");
+    this->WindowProperties->WindowShowStyle = payload.nCmdShow;
+    this->WindowProperties->Size.Width = 1024;
+    this->WindowProperties->Size.Height = 768;
+    this->WindowProperties->WindowInstanceHandle = payload.hInstance;
 
     // Load default, arrow, cursor
-    this->WindowProperties.CursorHandle = LoadCursorW(NULL, IDC_ARROW);
+    this->WindowProperties->CursorHandle = LoadCursorW(NULL, IDC_ARROW);
+
+    // Create window wrapper
+    this->Window = new ApplicationWindow(this->WindowProperties);
 }
 
 Application::~Application()
 {
     // Unregister window class
-    BOOL isClassUnregistered = UnregisterClassW(this->WindowProperties.ComClassName, this->WindowProperties.WindowInstanceHandle);
+    BOOL isClassUnregistered = UnregisterClassW(this->WindowProperties->ComClassName, this->WindowProperties->WindowInstanceHandle);
 
     // Unload cursor
-    BOOL isCursorDestroyed = DestroyCursor(this->WindowProperties.CursorHandle);
+    BOOL isCursorDestroyed = DestroyCursor(this->WindowProperties->CursorHandle);
+
+    delete this->Window;
+    delete this->WindowProperties;
 }
 
 LRESULT CALLBACK Application::WindowProcedureStatic(HWND windowHandle, UINT messageId, WPARAM wParam, LPARAM lParam)
@@ -38,7 +46,7 @@ LRESULT CALLBACK Application::WindowProcedureStatic(HWND windowHandle, UINT mess
         applicationThis = (Application *)createOptions->lpCreateParams;
         SetWindowLongPtr(windowHandle, GWLP_USERDATA, (LONG_PTR)applicationThis);
 
-        applicationThis->WindowProperties.WindowHandle = windowHandle;
+        applicationThis->Window->OnCreate(windowHandle);
     }
     else
     {
@@ -60,30 +68,25 @@ LRESULT Application::HandleWindowMessage(HWND windowHandle, UINT messageId, WPAR
     {
     case WM_DESTROY:
     {
-        PostQuitMessage(0);
-
+        this->Window->OnQuit();
         return 1;
     }
     break;
 
     case WM_PAINT:
     {
-        PAINTSTRUCT paintOptions;
-        HDC deviceContextHandle = BeginPaint(windowHandle, &paintOptions);
-        FillRect(deviceContextHandle, &paintOptions.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
-        EndPaint(windowHandle, &paintOptions);
-
+        this->Window->OnPaint();
         return 1;
     }
     break;
 
     case WM_SETCURSOR:
     {
-        SetCursor(this->WindowProperties.CursorHandle);
+        this->Window->OnSetCursor();
 
         return 1;
-        break;
     }
+    break;
     }
 
     return DefWindowProc(windowHandle, messageId, wParam, lParam);
@@ -94,8 +97,8 @@ int Application::Run()
     // Define window class
     WNDCLASSW windowClass = {};
     windowClass.lpfnWndProc = WindowProcedureStatic;
-    windowClass.hInstance = this->WindowProperties.WindowInstanceHandle;
-    windowClass.lpszClassName = this->WindowProperties.ComClassName;
+    windowClass.hInstance = this->WindowProperties->WindowInstanceHandle;
+    windowClass.lpszClassName = this->WindowProperties->ComClassName;
 
     // Register window class
     RegisterClassW(&windowClass);
@@ -103,13 +106,13 @@ int Application::Run()
     // Create window
     HWND windowHandle = CreateWindowExW(
         0,
-        this->WindowProperties.ComClassName,
-        this->WindowProperties.Title,
+        this->WindowProperties->ComClassName,
+        this->WindowProperties->Title,
         WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT, this->WindowProperties.Size.Width, this->WindowProperties.Size.Height,
+        CW_USEDEFAULT, CW_USEDEFAULT, this->WindowProperties->Size.Width, this->WindowProperties->Size.Height,
         NULL,
         NULL,
-        this->WindowProperties.WindowInstanceHandle,
+        this->WindowProperties->WindowInstanceHandle,
         this);
 
     if (windowHandle == NULL)
@@ -120,7 +123,7 @@ int Application::Run()
     }
 
     // Show window
-    ShowWindow(windowHandle, this->WindowProperties.WindowShowStyle);
+    ShowWindow(windowHandle, this->WindowProperties->WindowShowStyle);
 
     // Message loop
     MSG windowMessage = {};

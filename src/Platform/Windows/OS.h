@@ -5,7 +5,6 @@
 
 // Windows headers
 #define WIN32_LEAN_AND_MEAN
-#define WIN32_NO_STATUS
 #define VC_EXTRALEAN
 #define NOMINMAX
 #define NOCOMM
@@ -57,12 +56,11 @@
     }
 
 // Fatal error
-#define ERROR_FATAL(msg)          \
+#define ERROR_FATAL_WINDOWS(msg)  \
     {                             \
         OutputDebugStringA(msg);  \
         OutputDebugStringA("\n"); \
         PRINT_LAST_ERROR();       \
-        return 0;                 \
     }
 
 #endif // PLATFORM_WINDOWS_OS_H

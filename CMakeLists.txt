@@ -27,4 +27,4 @@ add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS})
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
 
 # Link against windows libraries
-target_link_libraries(${PROJECT_NAME} PRIVATE user32 gdi32)
+target_link_libraries(${PROJECT_NAME} PRIVATE user32 gdi32 d3d12 dxgi d3dcompiler)
