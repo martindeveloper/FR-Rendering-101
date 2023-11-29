@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Debug",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "build/Debug/FlyingRatRendering101.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "console": "internalConsole",
+      "preLaunchTask": "Build Debug",
+      "logging": {
+        "engineLogging": false,
+        "programOutput": true
+      }
+    }
+  ]
+}
