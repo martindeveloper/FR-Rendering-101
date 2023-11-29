@@ -1,13 +1,13 @@
 #pragma once
 
-#include "../Platform/Windows/Windows.h"
-#include "../Platform/Windows/Entrypoint.h"
+#include "../Platform/Platform.h"
 #include "Window/ApplicationWindow.h"
 #include "ApplicationWindowProperties.h"
 
 class Application
 {
 private:
+    Logger *Logger = nullptr;
     ApplicationWindow *Window = nullptr;
     ApplicationWindowProperties *WindowProperties = nullptr;
 

@@ -37,30 +37,19 @@
 #endif
 
 // Print last error
-#define PRINT_LAST_ERROR()                             \
-    {                                                  \
-        DWORD error = GetLastError();                  \
-        LPVOID messageBuffer = NULL;                   \
-        FormatMessageW(                                \
-            FORMAT_MESSAGE_ALLOCATE_BUFFER |           \
-                FORMAT_MESSAGE_FROM_SYSTEM |           \
-                FORMAT_MESSAGE_IGNORE_INSERTS,         \
-            NULL,                                      \
-            error,                                     \
-            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), \
-            (LPWSTR) & messageBuffer,                  \
-            0,                                         \
-            NULL);                                     \
-        OutputDebugStringW((LPCWSTR)messageBuffer);    \
-        LocalFree(messageBuffer);                      \
-    }
-
-// Fatal error
-#define ERROR_FATAL_WINDOWS(msg)  \
-    {                             \
-        OutputDebugStringA(msg);  \
-        OutputDebugStringA("\n"); \
-        PRINT_LAST_ERROR();       \
+#define WINDOWS_PRINT_LAST_ERROR()                                                         \
+    {                                                                                      \
+        DWORD error = GetLastError();                                                      \
+        LPVOID messageBuffer = NULL;                                                       \
+        FormatMessageW(                                                                    \
+            FORMAT_MESSAGE_ALLOCATE_BUFFER |                                               \
+                FORMAT_MESSAGE_FROM_SYSTEM |                                               \
+                FORMAT_MESSAGE_IGNORE_INSERTS,                                             \
+            NULL,                                                                          \
+            error,                                                                         \
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR) & messageBuffer, 0, NULL); \
+        OutputDebugStringW((LPCWSTR)messageBuffer);                                        \
+        LocalFree(messageBuffer);                                                          \
     }
 
 #endif // PLATFORM_WINDOWS_OS_H

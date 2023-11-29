@@ -6,10 +6,13 @@
 #include "../../Platform/Platform.h"
 #include "../ApplicationWindowProperties.h"
 
+#include "../../Renderer/DirectX12/RendererDirectX12.h"
+
 class ApplicationWindow
 {
 private:
     ApplicationWindowProperties *Properties;
+    RendererDirectX12 *Renderer;
 
 public:
     ApplicationWindow(ApplicationWindowProperties *properties);
@@ -19,6 +22,7 @@ public:
     void OnQuit();
     void OnPaint();
     void OnSetCursor();
+    void OnSizeChange(UINT width, UINT height);
 };
 
 #endif // APPLICATION_WINDOW_H

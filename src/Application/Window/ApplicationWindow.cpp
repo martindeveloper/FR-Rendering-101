@@ -7,11 +7,19 @@ ApplicationWindow::ApplicationWindow(ApplicationWindowProperties *properties)
 
 ApplicationWindow::~ApplicationWindow()
 {
+    if (this->Renderer != nullptr)
+    {
+        delete this->Renderer;
+    }
 }
 
 void ApplicationWindow::OnCreate(HWND windowHandle)
 {
     this->Properties->WindowHandle = windowHandle;
+
+    // Create renderer
+    this->Renderer = new RendererDirectX12();
+    this->Renderer->Initialize(windowHandle);
 }
 
 void ApplicationWindow::OnQuit()
@@ -32,4 +40,12 @@ void ApplicationWindow::OnPaint()
 void ApplicationWindow::OnSetCursor()
 {
     SetCursor(this->Properties->CursorHandle);
+}
+
+void ApplicationWindow::OnSizeChange(UINT width, UINT height)
+{
+    if (this->Renderer != nullptr)
+    {
+        this->Renderer->Resize(width, height);
+    }
 }

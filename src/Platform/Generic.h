@@ -24,11 +24,4 @@
 #pragma error("Platform.Generic: Unsupported platform")
 #endif
 
-// ERROR_FATAL macro which calls ERROR_FATAL_<PLATFORM_NAME> macro
-#ifdef PLATFORM_WINDOWS
-#define ERROR_FATAL(error_message) ERROR_FATAL_WINDOWS(error_message)
-#else
-#pragma error("Platform.Generic: Unsupported platform")
-#endif
-
 #endif // PLATFORM_GENERIC_H

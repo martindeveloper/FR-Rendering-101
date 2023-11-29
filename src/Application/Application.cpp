@@ -4,6 +4,10 @@
 
 Application::Application(struct EntrypointPayload payload)
 {
+    // Initialize logger
+    this->Logger = Platform::GetLogger();
+
+    // Initialize window properties
     this->WindowProperties = new ApplicationWindowProperties();
     this->WindowProperties->Title = STRING_NATIVE("Flying Rat Rendering 101");
     this->WindowProperties->ComClassName = STRING_NATIVE("FlyingRatRendering101");
@@ -80,6 +84,16 @@ LRESULT Application::HandleWindowMessage(HWND windowHandle, UINT messageId, WPAR
     }
     break;
 
+    case WM_SIZE:
+    {
+        UINT width = LOWORD(lParam);
+        UINT height = HIWORD(lParam);
+
+        this->Window->OnSizeChange(width, height);
+
+        return 1;
+    }
+
     case WM_SETCURSOR:
     {
         this->Window->OnSetCursor();
@@ -117,7 +131,7 @@ int Application::Run()
 
     if (windowHandle == NULL)
     {
-        ERROR_FATAL("Failed to create window!");
+        this->Logger->Fatal("Failed to create window");
 
         return 0;
     }
