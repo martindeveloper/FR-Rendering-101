@@ -13,7 +13,7 @@
       "label": "Build Debug",
       "type": "shell",
       "command": "cmake",
-      "args": ["--build", "build/", "--config", "Debug"],
+      "args": ["--build", "build/", "--config", "Debug", "--parallel", "4"],
       "dependsOn": ["Configure"],
       "group": {
         "kind": "build",
@@ -25,7 +25,7 @@
       "label": "Build Release",
       "type": "shell",
       "command": "cmake",
-      "args": ["--build", "build/", "--config", "Release"],
+      "args": ["--build", "build/", "--config", "Release", "--parallel", "4"],
       "dependsOn": ["Configure"],
       "group": "build",
       "problemMatcher": ["$msCompile"]
