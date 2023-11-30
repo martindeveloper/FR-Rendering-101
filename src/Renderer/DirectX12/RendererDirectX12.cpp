@@ -26,10 +26,9 @@ void RendererDirectX12::Initialize(HWND windowHandle, UINT width, UINT height)
 
     this->CreateFrameFence();
 
-    this->TriangleCreateRootSignature();
-    this->TriangleCompileShaders();
-    this->TriangleCreatePipelineState();
-    this->TriangleCreateVertexBuffer();
+    // Triangle entity
+    this->Triangle = new TriangleEntity();
+    this->Triangle->OnResourceCreate(this->Device);
 }
 
 void RendererDirectX12::CreateFrameFence()
@@ -92,7 +91,7 @@ void RendererDirectX12::Render()
 
     // Reset command allocator and command list
     this->CommandAllocator->Reset();
-    this->CommandList->Reset(this->CommandAllocator.Get(), this->TrianglePipelineState.Get());
+    this->CommandList->Reset(this->CommandAllocator.Get(), nullptr);
 
     // Transition swap chain buffer to render target
     D3D12_RESOURCE_BARRIER resourceBarrier = {};
@@ -130,22 +129,8 @@ void RendererDirectX12::Render()
 
     this->CommandList->RSSetScissorRects(1, &scissorRectangle);
 
-    // Set root signature
-    this->CommandList->SetGraphicsRootSignature(this->TriangleRootSignature.Get());
-
-    // Set vertex buffer
-    D3D12_VERTEX_BUFFER_VIEW vertexBufferView = {};
-    vertexBufferView.BufferLocation = this->TriangleVertexBuffer->GetGPUVirtualAddress();
-    vertexBufferView.SizeInBytes = sizeof(this->TriangleVertices);
-    vertexBufferView.StrideInBytes = sizeof(Vertex);
-
-    this->CommandList->IASetVertexBuffers(0, 1, &vertexBufferView);
-
-    // Set primitive topology
-    this->CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-    // Draw triangle
-    this->CommandList->DrawInstanced(3, 1, 0, 0);
+    // Triangle entity
+    this->Triangle->OnRender(this->CommandList);
 
     // Transition swap chain buffer to present
     resourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
@@ -171,193 +156,6 @@ void RendererDirectX12::Render()
 
     // Increment frame counter
     this->FrameCounter++;
-}
-
-void RendererDirectX12::TriangleCreateVertexBuffer()
-{
-    // Create vertex buffer
-    D3D12_HEAP_PROPERTIES heapProperties = {};
-    heapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
-    heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-    heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-    heapProperties.CreationNodeMask = 1;
-    heapProperties.VisibleNodeMask = 1;
-
-    D3D12_RESOURCE_DESC resourceDescription = {};
-    resourceDescription.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    resourceDescription.Alignment = 0;
-    resourceDescription.Width = sizeof(this->TriangleVertices);
-    resourceDescription.Height = 1;
-    resourceDescription.DepthOrArraySize = 1;
-    resourceDescription.MipLevels = 1;
-    resourceDescription.Format = DXGI_FORMAT_UNKNOWN;
-    resourceDescription.SampleDesc.Count = 1;
-    resourceDescription.SampleDesc.Quality = 0;
-    resourceDescription.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    resourceDescription.Flags = D3D12_RESOURCE_FLAG_NONE;
-
-    HRESULT result = this->Device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDescription, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&this->TriangleVertexBuffer));
-
-    if (FAILED(result))
-    {
-        this->Logger->Fatal("RendererDirectX12::TriangleCreateVertexBuffer: Failed to create vertex buffer");
-        return;
-    }
-
-    // Copy vertex data to vertex buffer
-    UINT8 *vertexDataBegin = nullptr;
-    D3D12_RANGE readRange = {0, 0};
-
-    result = this->TriangleVertexBuffer->Map(0, &readRange, reinterpret_cast<void **>(&vertexDataBegin));
-
-    if (FAILED(result))
-    {
-        this->Logger->Fatal("RendererDirectX12::TriangleCreateVertexBuffer: Failed to map vertex buffer");
-        return;
-    }
-
-    memcpy(vertexDataBegin, this->TriangleVertices, sizeof(this->TriangleVertices));
-
-    this->TriangleVertexBuffer->Unmap(0, nullptr);
-}
-
-void RendererDirectX12::TriangleCreatePipelineState()
-{
-    D3D12_INPUT_ELEMENT_DESC inputElement[] =
-        {
-            {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-            {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-        };
-
-    UINT inputElementCount = sizeof(inputElement) / sizeof(D3D12_INPUT_ELEMENT_DESC);
-
-    D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineStateDescription = {};
-    pipelineStateDescription.InputLayout = {inputElement, inputElementCount};
-    pipelineStateDescription.pRootSignature = this->TriangleRootSignature.Get();
-    pipelineStateDescription.VS = {reinterpret_cast<BYTE *>(this->TriangleVertexShader->GetBufferPointer()), this->TriangleVertexShader->GetBufferSize()};
-    pipelineStateDescription.PS = {reinterpret_cast<BYTE *>(this->TrianglePixelShader->GetBufferPointer()), this->TrianglePixelShader->GetBufferSize()};
-
-    D3D12_RASTERIZER_DESC rasterizerDescription = {};
-    rasterizerDescription.FillMode = D3D12_FILL_MODE_SOLID;
-    rasterizerDescription.CullMode = D3D12_CULL_MODE_BACK;
-    rasterizerDescription.FrontCounterClockwise = FALSE;
-    rasterizerDescription.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
-    rasterizerDescription.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
-    rasterizerDescription.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
-    rasterizerDescription.DepthClipEnable = TRUE;
-    rasterizerDescription.MultisampleEnable = FALSE;
-    rasterizerDescription.AntialiasedLineEnable = FALSE;
-    rasterizerDescription.ForcedSampleCount = 0;
-    rasterizerDescription.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
-
-    D3D12_BLEND_DESC blendDescription = {};
-    blendDescription.AlphaToCoverageEnable = FALSE;
-    blendDescription.IndependentBlendEnable = FALSE;
-    blendDescription.RenderTarget[0].BlendEnable = FALSE;
-    blendDescription.RenderTarget[0].LogicOpEnable = FALSE;
-    blendDescription.RenderTarget[0].SrcBlend = D3D12_BLEND_ONE;
-    blendDescription.RenderTarget[0].DestBlend = D3D12_BLEND_ZERO;
-    blendDescription.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
-    blendDescription.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
-    blendDescription.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
-    blendDescription.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
-    blendDescription.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;
-    blendDescription.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-
-    D3D12_DEPTH_STENCIL_DESC depthStencilDescription = {};
-    depthStencilDescription.DepthEnable = FALSE;
-    depthStencilDescription.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-    depthStencilDescription.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-    depthStencilDescription.StencilEnable = FALSE;
-    depthStencilDescription.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
-    depthStencilDescription.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
-    depthStencilDescription.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
-    depthStencilDescription.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
-    depthStencilDescription.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
-    depthStencilDescription.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
-    depthStencilDescription.BackFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
-    depthStencilDescription.BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
-    depthStencilDescription.BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
-    depthStencilDescription.BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
-
-    pipelineStateDescription.RasterizerState = rasterizerDescription;
-    pipelineStateDescription.BlendState = blendDescription;
-    pipelineStateDescription.DepthStencilState = depthStencilDescription;
-    pipelineStateDescription.SampleMask = UINT_MAX;
-    pipelineStateDescription.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-    pipelineStateDescription.NumRenderTargets = 1;
-    pipelineStateDescription.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-    pipelineStateDescription.SampleDesc.Count = 1;
-
-    Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineState = nullptr;
-
-    HRESULT result = this->Device->CreateGraphicsPipelineState(&pipelineStateDescription, IID_PPV_ARGS(&pipelineState));
-
-    if (FAILED(result))
-    {
-        this->Logger->Fatal("RendererDirectX12::TriangleCreatePipelineState: Failed to create pipeline state");
-        return;
-    }
-
-    this->TrianglePipelineState = pipelineState.Detach();
-}
-
-void RendererDirectX12::TriangleCompileShaders()
-{
-    UINT compileFlags = 0;
-
-#ifdef BUILD_TYPE_DEBUG
-    compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
-#endif
-
-    HRESULT result = D3DCompileFromFile(L"E:\\code\\Flying-Rat\\Rendering-101\\shaders\\TriangleVertexShader.hlsl", nullptr, nullptr, "main", "vs_5_0", compileFlags, 0, &this->TriangleVertexShader, nullptr);
-
-    if (FAILED(result))
-    {
-        this->Logger->Fatal("RendererDirectX12::TriangleCompileShaders: Failed to compile vertex shader");
-        return;
-    }
-
-    result = D3DCompileFromFile(L"E:\\code\\Flying-Rat\\Rendering-101\\shaders\\TrianglePixelShader.hlsl", nullptr, nullptr, "main", "ps_5_0", compileFlags, 0, &this->TrianglePixelShader, nullptr);
-
-    if (FAILED(result))
-    {
-        this->Logger->Fatal("RendererDirectX12::TriangleCompileShaders: Failed to compile pixel shader");
-        return;
-    }
-}
-
-void RendererDirectX12::TriangleCreateRootSignature()
-{
-    D3D12_ROOT_SIGNATURE_DESC rootSignatureDescription = {};
-    rootSignatureDescription.NumParameters = 0;
-    rootSignatureDescription.pParameters = nullptr;
-    rootSignatureDescription.NumStaticSamplers = 0;
-    rootSignatureDescription.pStaticSamplers = nullptr;
-    rootSignatureDescription.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-
-    Microsoft::WRL::ComPtr<ID3DBlob> signature = nullptr;
-    Microsoft::WRL::ComPtr<ID3DBlob> error = nullptr;
-
-    HRESULT result = D3D12SerializeRootSignature(&rootSignatureDescription, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
-
-    if (FAILED(result))
-    {
-        this->Logger->Fatal("RendererDirectX12::TriangleCreateRootSignature: Failed to serialize root signature");
-        return;
-    }
-
-    Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature = nullptr;
-
-    result = this->Device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
-
-    if (FAILED(result))
-    {
-        this->Logger->Fatal("RendererDirectX12::TriangleCreateRootSignature: Failed to create root signature");
-        return;
-    }
-
-    this->TriangleRootSignature = rootSignature.Detach();
 }
 
 void RendererDirectX12::Resize(UINT width, UINT height)

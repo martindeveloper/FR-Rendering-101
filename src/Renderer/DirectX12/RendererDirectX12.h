@@ -11,6 +11,7 @@
 
 #include "../../Platform/Platform.h"
 #include "Vertex.h"
+#include "../../Entities/TriangleEntity.h"
 
 /**
  * @brief The GPUPerformanceClass enum
@@ -58,17 +59,8 @@ private:
 
     bool ShouldRender = true;
 
-    // Triangle specific
-    Microsoft::WRL::ComPtr<ID3D12RootSignature> TriangleRootSignature = nullptr;
-    Microsoft::WRL::ComPtr<ID3D12PipelineState> TrianglePipelineState = nullptr;
-    Microsoft::WRL::ComPtr<ID3DBlob> TriangleVertexShader = nullptr;
-    Microsoft::WRL::ComPtr<ID3DBlob> TrianglePixelShader = nullptr;
-    Microsoft::WRL::ComPtr<ID3D12Resource> TriangleVertexBuffer = nullptr;
-
-    const Vertex TriangleVertices[3] = {
-        {DirectX::XMFLOAT3(0.0f, 0.25f, 0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f)},
-        {DirectX::XMFLOAT3(0.25f, -0.25f, 0.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)},
-        {DirectX::XMFLOAT3(-0.25f, -0.25f, 0.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f)}};
+    // Triangle entity
+    TriangleEntity *Triangle = nullptr;
 
 public:
     RendererDirectX12();
@@ -104,12 +96,6 @@ private:
 
     // Frame fence
     void CreateFrameFence();
-
-    // Triangle specific
-    void TriangleCreateRootSignature();
-    void TriangleCompileShaders();
-    void TriangleCreatePipelineState();
-    void TriangleCreateVertexBuffer();
 
     // Utility functions
     void WaitForGPU();

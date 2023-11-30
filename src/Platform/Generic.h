@@ -24,4 +24,10 @@
 #pragma error("Platform.Generic: Unsupported platform")
 #endif
 
+#ifndef PROJECT_ROOT_DIR
+#define PROJECT_ROOT_DIR L"" // Should be set by CMake
+#endif
+
+#define SHADER_PATH(shader) PROJECT_ROOT_DIR L"\\shaders\\" L##shader
+
 #endif // PLATFORM_GENERIC_H

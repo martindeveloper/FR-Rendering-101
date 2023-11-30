@@ -4,6 +4,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(PROJECT_ROOT_DIR ${CMAKE_SOURCE_DIR})
+
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
 
 if (MSVC)
@@ -25,6 +27,8 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 # Include every .h file in include and its subdirectories
 file(GLOB_RECURSE HEADERS "include/*.h")
+
+add_definitions(-DPROJECT_ROOT_DIR="${PROJECT_ROOT_DIR}")
 
 # Add executable or library
 add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS})
