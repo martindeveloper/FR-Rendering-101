@@ -15,6 +15,18 @@ struct VertexOutput
     float4 color : COLOR;
 };
 
+float3x3 makeRotationZ(float angle)
+{
+    float s = sin(angle);
+    float c = cos(angle);
+
+    return float3x3(
+        c, -s, 0,
+        s, c, 0,
+        0, 0, 1
+    );
+}
+
 VertexOutput main(VertexInput input)
 {
     VertexOutput output;
@@ -23,7 +35,12 @@ VertexOutput main(VertexInput input)
 
     float pulse = (sin(scaledTime) + 1.0) * 0.5 + 0.5;
 
-    output.position = float4(input.position * pulse, 1.0f);
+    float rotationAngle = scaledTime;
+    float3x3 rotationMatrix = makeRotationZ(rotationAngle);
+
+    float3 rotatedPosition = mul(input.position, rotationMatrix);
+    output.position = float4(rotatedPosition * pulse, 1.0f);
+
     output.color = input.color;
 
     return output;
