@@ -19,7 +19,7 @@ void ApplicationWindow::OnCreate(HWND windowHandle)
 
     // Create renderer
     this->Renderer = new RendererDirectX12();
-    this->Renderer->Initialize(windowHandle);
+    this->Renderer->Initialize(windowHandle, this->Properties->Size.Width, this->Properties->Size.Height);
 }
 
 void ApplicationWindow::OnQuit()
@@ -29,12 +29,14 @@ void ApplicationWindow::OnQuit()
 
 void ApplicationWindow::OnPaint()
 {
-    PAINTSTRUCT paintOptions;
+    // PAINTSTRUCT paintOptions;
 
-    HDC deviceContextHandle = BeginPaint(this->Properties->WindowHandle, &paintOptions);
-    FillRect(deviceContextHandle, &paintOptions.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+    // HDC deviceContextHandle = BeginPaint(this->Properties->WindowHandle, &paintOptions);
+    // FillRect(deviceContextHandle, &paintOptions.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
 
-    EndPaint(this->Properties->WindowHandle, &paintOptions);
+    // EndPaint(this->Properties->WindowHandle, &paintOptions);
+
+    this->Renderer->Render();
 }
 
 void ApplicationWindow::OnSetCursor()
@@ -44,6 +46,9 @@ void ApplicationWindow::OnSetCursor()
 
 void ApplicationWindow::OnSizeChange(UINT width, UINT height)
 {
+    this->Properties->Size.Width = width;
+    this->Properties->Size.Height = height;
+
     if (this->Renderer != nullptr)
     {
         this->Renderer->Resize(width, height);

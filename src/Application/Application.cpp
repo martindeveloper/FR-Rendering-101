@@ -94,6 +94,11 @@ LRESULT Application::HandleWindowMessage(HWND windowHandle, UINT messageId, WPAR
         return 1;
     }
 
+    case WM_SIZING:
+    {
+        return 1;
+    }
+
     case WM_SETCURSOR:
     {
         this->Window->OnSetCursor();
@@ -122,7 +127,7 @@ int Application::Run()
         0,
         this->WindowProperties->ComClassName,
         this->WindowProperties->Title,
-        WS_OVERLAPPEDWINDOW,
+        (WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME) & ~WS_MAXIMIZEBOX, // Disable resizing - causing issues with Dx12 RTVs
         CW_USEDEFAULT, CW_USEDEFAULT, this->WindowProperties->Size.Width, this->WindowProperties->Size.Height,
         NULL,
         NULL,
