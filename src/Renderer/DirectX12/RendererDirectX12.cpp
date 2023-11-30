@@ -9,46 +9,7 @@ RendererDirectX12::RendererDirectX12()
 
 RendererDirectX12::~RendererDirectX12()
 {
-    // TODO: Not all resources are released yet
-    // Release all DirectX 12 related resources
-
-    if (this->CommandAllocator != nullptr)
-    {
-        this->CommandAllocator->Release();
-        this->CommandAllocator = nullptr;
-    }
-
-    if (this->CommandQueue != nullptr)
-    {
-        this->CommandQueue->Release();
-        this->CommandQueue = nullptr;
-    }
-
-    // if (this->CommandList != nullptr)
-    // {
-    //     this->CommandList->Release();
-    //     this->CommandList = nullptr;
-    // }
-
-    this->CleanupRenderTargetViews();
-
-    if (this->DXGIFactory != nullptr)
-    {
-        this->DXGIFactory->Release();
-        this->DXGIFactory = nullptr;
-    }
-
-    if (this->SwapChain != nullptr)
-    {
-        this->SwapChain->Release();
-        this->SwapChain = nullptr;
-    }
-
-    if (this->Device != nullptr)
-    {
-        this->Device->Release();
-        this->Device = nullptr;
-    }
+    // No extra need to manually release resources because of ComPtr
 }
 
 void RendererDirectX12::Initialize(HWND windowHandle, UINT width, UINT height)
