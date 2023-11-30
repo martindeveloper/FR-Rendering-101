@@ -20,6 +20,17 @@ public:
         static Logger instance;
         return &instance;
     }
-};
 
+    static void TriggerCrash()
+    {
+        exit(1);
+    };
+
+    static void TriggerBreakpoint()
+    {
+#if defined(PLATFORM_WINDOWS) && defined(BUILD_TYPE_DEBUG)
+        DebugBreak();
+#endif
+    };
+};
 #endif // PLATFORM_H

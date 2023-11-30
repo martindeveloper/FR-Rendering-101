@@ -29,13 +29,6 @@ void ApplicationWindow::OnQuit()
 
 void ApplicationWindow::OnPaint()
 {
-    // PAINTSTRUCT paintOptions;
-
-    // HDC deviceContextHandle = BeginPaint(this->Properties->WindowHandle, &paintOptions);
-    // FillRect(deviceContextHandle, &paintOptions.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
-
-    // EndPaint(this->Properties->WindowHandle, &paintOptions);
-
     this->Renderer->Render();
 }
 

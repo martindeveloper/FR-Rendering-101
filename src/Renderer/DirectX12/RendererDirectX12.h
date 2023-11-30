@@ -32,11 +32,11 @@ private:
 
     HWND WindowHandle = nullptr;
 
-    DXGI_FORMAT BufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-    UINT BufferWidth = 0;
-    UINT BufferHeight = 0;
+    DXGI_FORMAT FrameBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+    UINT FrameBufferWidth = 0;
+    UINT FrameBufferHeight = 0;
     static const UINT BufferCount = 2;
-    UINT CurrentBufferIndex = 0;
+    UINT CurrentFrameBufferIndex = 0;
 
     Microsoft::WRL::ComPtr<IDXGIFactory> DXGIFactory = nullptr;
     Microsoft::WRL::ComPtr<ID3D12Device> Device = nullptr;
@@ -55,6 +55,8 @@ private:
     HANDLE FrameFenceEvent = nullptr;
 
     UINT FrameCounter = 0;
+
+    bool ShouldRender = true;
 
     // Triangle specific
     Microsoft::WRL::ComPtr<ID3D12RootSignature> TriangleRootSignature = nullptr;
@@ -112,6 +114,7 @@ private:
     // Utility functions
     void WaitForGPU();
     GPUPerformanceClass TryToDeterminePerformanceClass(DXGI_ADAPTER_DESC1 *adapterDescription);
+    inline void CheckHandle(HRESULT result, const char *message, bool shouldCrash = true);
 };
 
 #endif // RENDERER_DIRECTX12_H

@@ -55,8 +55,8 @@ void RendererDirectX12::Initialize(HWND windowHandle, UINT width, UINT height)
 {
     this->WindowHandle = windowHandle;
 
-    this->BufferWidth = width;
-    this->BufferHeight = height;
+    this->FrameBufferWidth = width;
+    this->FrameBufferHeight = height;
 
     this->CreateDevice();
     this->CreateCommandInterfaces();
@@ -91,7 +91,7 @@ void RendererDirectX12::WaitForGPU()
         return;
     }
 
-    const UINT64 currentFenceValue = this->FrameFenceValues[this->CurrentBufferIndex];
+    const UINT64 currentFenceValue = this->FrameFenceValues[this->CurrentFrameBufferIndex];
     HRESULT hr = this->CommandQueue->Signal(this->FrameFence.Get(), currentFenceValue);
     if (FAILED(hr))
     {
@@ -106,9 +106,9 @@ void RendererDirectX12::WaitForGPU()
         return;
     }
 
-    this->CurrentBufferIndex = swapChain3->GetCurrentBackBufferIndex();
+    this->CurrentFrameBufferIndex = swapChain3->GetCurrentBackBufferIndex();
     UINT64 completedFenceValue = this->FrameFence->GetCompletedValue();
-    UINT64 frameFenceValue = this->FrameFenceValues[this->CurrentBufferIndex];
+    UINT64 frameFenceValue = this->FrameFenceValues[this->CurrentFrameBufferIndex];
 
     if (completedFenceValue < frameFenceValue)
     {
@@ -116,11 +116,16 @@ void RendererDirectX12::WaitForGPU()
         WaitForSingleObject(this->FrameFenceEvent, INFINITE);
     }
 
-    this->FrameFenceValues[this->CurrentBufferIndex] = currentFenceValue + 1;
+    this->FrameFenceValues[this->CurrentFrameBufferIndex] = currentFenceValue + 1;
 }
 
 void RendererDirectX12::Render()
 {
+    if (this->ShouldRender == false)
+    {
+        return;
+    }
+
     // Ensure that the GPU is done rendering
     this->WaitForGPU();
 
@@ -132,7 +137,7 @@ void RendererDirectX12::Render()
     D3D12_RESOURCE_BARRIER resourceBarrier = {};
     resourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 
-    resourceBarrier.Transition.pResource = this->RenderTargets[this->CurrentBufferIndex].Get();
+    resourceBarrier.Transition.pResource = this->RenderTargets[this->CurrentFrameBufferIndex].Get();
     resourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
     resourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
     resourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
@@ -141,15 +146,15 @@ void RendererDirectX12::Render()
 
     // Set render target
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = this->RTVHeap->GetCPUDescriptorHandleForHeapStart();
-    rtvHandle.ptr += this->CurrentBufferIndex * this->Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    rtvHandle.ptr += this->CurrentFrameBufferIndex * this->Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     this->CommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
     // Set viewport
     D3D12_VIEWPORT viewport = {};
     viewport.TopLeftX = 0;
     viewport.TopLeftY = 0;
-    viewport.Width = (FLOAT)this->BufferWidth;
-    viewport.Height = (FLOAT)this->BufferHeight;
+    viewport.Width = (FLOAT)this->FrameBufferWidth;
+    viewport.Height = (FLOAT)this->FrameBufferHeight;
     viewport.MinDepth = D3D12_MIN_DEPTH;
     viewport.MaxDepth = D3D12_MAX_DEPTH;
 
@@ -159,8 +164,8 @@ void RendererDirectX12::Render()
     D3D12_RECT scissorRectangle = {};
     scissorRectangle.left = 0;
     scissorRectangle.top = 0;
-    scissorRectangle.right = this->BufferWidth;
-    scissorRectangle.bottom = this->BufferHeight;
+    scissorRectangle.right = this->FrameBufferWidth;
+    scissorRectangle.bottom = this->FrameBufferHeight;
 
     this->CommandList->RSSetScissorRects(1, &scissorRectangle);
 
@@ -340,7 +345,7 @@ void RendererDirectX12::TriangleCompileShaders()
 {
     UINT compileFlags = 0;
 
-#if defined(DEBUG) || defined(_DEBUG)
+#ifdef BUILD_TYPE_DEBUG
     compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
@@ -396,31 +401,40 @@ void RendererDirectX12::TriangleCreateRootSignature()
 
 void RendererDirectX12::Resize(UINT width, UINT height)
 {
-    // TODO: Broken
-    return;
-
     if (this->SwapChain == nullptr)
     {
         this->Logger->Fatal("RendererDirectX12::Resize: Swap chain is null");
         return;
     }
 
-    this->BufferWidth = width;
-    this->BufferHeight = height;
+    if (width == this->FrameBufferWidth && height == this->FrameBufferHeight)
+    {
+        return;
+    }
 
-    // NOTE: This could be risky as we are not waiting for the GPU to finish its work
+    this->ShouldRender = false;
+
+    this->FrameBufferWidth = width;
+    this->FrameBufferHeight = height;
+
+    this->WaitForGPU();
+
     // Remove old render target views
     this->CleanupRenderTargetViews();
 
-    this->SwapChain->ResizeBuffers(this->BufferCount, width, height, this->BufferFormat, 0);
+    this->SwapChain->ResizeBuffers(this->BufferCount, width, height, this->FrameBufferFormat, 0);
 
     // Create new render target views with new buffer size
     this->CreateRenderTargetViews();
+
+    this->WaitForGPU();
+
+    this->ShouldRender = true;
 }
 
 void RendererDirectX12::CreateDevice()
 {
-#ifdef _DEBUG
+#ifdef BUILD_TYPE_DEBUG
     if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&this->DebugInterface))))
     {
         this->DebugInterface->EnableDebugLayer();
@@ -518,30 +532,15 @@ void RendererDirectX12::CreateCommandInterfaces()
     queueDescription.Type = D3D12_COMMAND_LIST_TYPE_DIRECT; // Compute and graphics commands
 
     result = this->Device->CreateCommandQueue(&queueDescription, IID_PPV_ARGS(&this->CommandQueue));
-
-    if (FAILED(result))
-    {
-        this->Logger->Fatal("RendererDirectX12::CreateCommandInterfaces: Failed to create command queue");
-        return;
-    }
+    this->CheckHandle(result, "Failed to create command queue");
 
     // Create command allocator
     result = this->Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&this->CommandAllocator));
-
-    if (FAILED(result))
-    {
-        this->Logger->Fatal("RendererDirectX12::CreateCommandInterfaces: Failed to create command allocator");
-        return;
-    }
+    this->CheckHandle(result, "Failed to create command allocator");
 
     // Create command list
     result = this->Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, this->CommandAllocator.Get(), nullptr, IID_PPV_ARGS(&this->CommandList));
-
-    if (FAILED(result))
-    {
-        this->Logger->Fatal("RendererDirectX12::CreateCommandInterfaces: Failed to create command list");
-        return;
-    }
+    this->CheckHandle(result, "Failed to create command list");
 
     // Close command list
     this->CommandList->Close();
@@ -555,11 +554,13 @@ void RendererDirectX12::CreateSwapChain()
         return;
     }
 
+    HRESULT result;
+
     DXGI_SWAP_CHAIN_DESC1 swapChainDescription = {};
     swapChainDescription.BufferCount = this->BufferCount;
-    swapChainDescription.Width = this->BufferWidth;
-    swapChainDescription.Height = this->BufferHeight;
-    swapChainDescription.Format = this->BufferFormat;
+    swapChainDescription.Width = this->FrameBufferWidth;
+    swapChainDescription.Height = this->FrameBufferHeight;
+    swapChainDescription.Format = this->FrameBufferFormat;
     swapChainDescription.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapChainDescription.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDescription.SampleDesc.Count = 1; // No anti-aliasing
@@ -568,32 +569,21 @@ void RendererDirectX12::CreateSwapChain()
 
     Microsoft::WRL::ComPtr<IDXGIFactory7> dxgiFactory7 = nullptr;
 
-    if (FAILED(this->DXGIFactory.As(&dxgiFactory7)))
-    {
-        this->Logger->Fatal("RendererDirectX12::CreateSwapChain: Failed to cast DXGI factory to DXGI factory 7");
-        return;
-    }
+    result = this->DXGIFactory.As(&dxgiFactory7);
+    this->CheckHandle(result, "Failed to cast DXGI factory to DXGI factory 7");
 
-    HRESULT result = dxgiFactory7->CreateSwapChainForHwnd(this->CommandQueue.Get(), this->WindowHandle, &swapChainDescription, nullptr, nullptr, &swapChain);
-
-    if (FAILED(result))
-    {
-        this->Logger->Fatal("RendererDirectX12::CreateSwapChain: Failed to create swap chain");
-        return;
-    }
+    result = dxgiFactory7->CreateSwapChainForHwnd(this->CommandQueue.Get(), this->WindowHandle, &swapChainDescription, nullptr, nullptr, &swapChain);
+    this->CheckHandle(result, "Failed to create swap chain");
 
     this->SwapChain = swapChain.Detach();
 }
 
 void RendererDirectX12::CleanupRenderTargetViews()
 {
-    // TODO: Cause exception in some cases
-
     for (UINT i = 0; i < this->BufferCount; i++)
     {
         if (this->RenderTargets[i] != nullptr)
         {
-            this->RenderTargets[i]->Release();
             this->RenderTargets[i] = nullptr;
         }
     }
@@ -620,11 +610,7 @@ void RendererDirectX12::CreateRenderTargetViews()
 
     HRESULT result = this->Device->CreateDescriptorHeap(&rtvHeapDescription, IID_PPV_ARGS(&this->RTVHeap));
 
-    if (FAILED(result))
-    {
-        this->Logger->Fatal("RendererDirectX12::CreateRenderTargetView: Failed to create descriptor heap");
-        return;
-    }
+    this->CheckHandle(result, "Failed to create descriptor heap");
 
     UINT rtvDescriptorSize = this->Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = this->RTVHeap->GetCPUDescriptorHandleForHeapStart();
@@ -632,12 +618,7 @@ void RendererDirectX12::CreateRenderTargetViews()
     for (UINT i = 0; i < this->BufferCount; i++)
     {
         result = this->SwapChain->GetBuffer(i, IID_PPV_ARGS(&this->RenderTargets[i]));
-
-        if (FAILED(result))
-        {
-            this->Logger->Fatal("RendererDirectX12::CreateRenderTargetView: Failed to get swap chain buffer");
-            return;
-        }
+        this->CheckHandle(result, "Failed to get swap chain buffer");
 
         this->Device->CreateRenderTargetView(this->RenderTargets[i].Get(), nullptr, rtvHandle);
 
@@ -657,5 +638,20 @@ GPUPerformanceClass RendererDirectX12::TryToDeterminePerformanceClass(DXGI_ADAPT
         return GPUPerformanceClass::Integrated;
     default:
         return GPUPerformanceClass::Unknown;
+    }
+}
+
+void RendererDirectX12::CheckHandle(HRESULT result, const char *message, bool shouldCrash)
+{
+    if (FAILED(result))
+    {
+        this->Logger->Fatal("RendererDirectX12: %s", message);
+
+        Platform::TriggerBreakpoint();
+
+        if (shouldCrash)
+        {
+            Platform::TriggerCrash();
+        }
     }
 }
