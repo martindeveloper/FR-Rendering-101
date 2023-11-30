@@ -130,7 +130,7 @@ void RendererDirectX12::Render()
     this->CommandList->RSSetScissorRects(1, &scissorRectangle);
 
     // Triangle entity
-    this->Triangle->OnRender(this->CommandList);
+    this->Triangle->OnRender(this->FrameCounter, this->CommandList);
 
     // Transition swap chain buffer to present
     resourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;

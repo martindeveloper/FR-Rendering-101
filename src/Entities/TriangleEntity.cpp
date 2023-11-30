@@ -20,16 +20,46 @@ void TriangleEntity::CheckHandle(HRESULT result, const char *message, bool shoul
     }
 }
 
+void TriangleEntity::CheckShaderError(HRESULT result, ID3DBlob *blob, const char *message, bool shouldCrash)
+{
+    if (FAILED(result))
+    {
+        this->Logger->Fatal("TriangleEntity: %s", message);
+
+        if (blob != nullptr)
+        {
+            this->Logger->Fatal("TriangleEntity: %s", reinterpret_cast<const char *>(blob->GetBufferPointer()));
+        }
+
+        Platform::TriggerBreakpoint();
+
+        if (shouldCrash)
+        {
+            Platform::TriggerCrash();
+        }
+    }
+}
+
 void TriangleEntity::OnResourceCreate(Microsoft::WRL::ComPtr<ID3D12Device> device)
 {
     this->CreateRootSignature(device);
     this->CreateShaders();
     this->CreatePipelineState(device);
     this->CreateVertexBuffer(device);
+    this->CreateConstantBuffer(device);
 }
 
-void TriangleEntity::OnRender(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList)
+void TriangleEntity::OnRender(UINT frame, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList)
 {
+    // Prepare constant buffer
+    ConstantBufferPayload *constantBuffer = nullptr;
+    this->ConstantBuffer->Map(0, nullptr, reinterpret_cast<void **>(&constantBuffer));
+
+    // Not great, but we need some time-based animation
+    constantBuffer->Time = static_cast<float>(frame) / 100.0f;
+
+    this->ConstantBuffer->Unmap(0, nullptr);
+
     // Set pipeline state
     commandList->SetPipelineState(this->PipelineState.Get());
 
@@ -44,6 +74,9 @@ void TriangleEntity::OnRender(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> 
 
     commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
 
+    // Set constant buffer
+    commandList->SetGraphicsRootConstantBufferView(0, this->ConstantBuffer->GetGPUVirtualAddress());
+
     // Set primitive topology
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -53,9 +86,15 @@ void TriangleEntity::OnRender(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> 
 
 void TriangleEntity::CreateRootSignature(Microsoft::WRL::ComPtr<ID3D12Device> device)
 {
+    D3D12_ROOT_PARAMETER rootParameters[1];
+    rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParameters[0].Descriptor.ShaderRegister = 0;
+    rootParameters[0].Descriptor.RegisterSpace = 0;
+    rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
     D3D12_ROOT_SIGNATURE_DESC rootSignatureDescription = {};
-    rootSignatureDescription.NumParameters = 0;
-    rootSignatureDescription.pParameters = nullptr;
+    rootSignatureDescription.NumParameters = 1;
+    rootSignatureDescription.pParameters = rootParameters;
     rootSignatureDescription.NumStaticSamplers = 0;
     rootSignatureDescription.pStaticSamplers = nullptr;
     rootSignatureDescription.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
@@ -157,21 +196,23 @@ void TriangleEntity::CreateShaders()
 #ifdef BUILD_TYPE_DEBUG
     compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
+    ID3DBlob *errorBlob = nullptr;
 
     const wchar_t *shaderVertexPath = SHADER_PATH("TriangleVertexShader.hlsl");
 
     this->Logger->Message("TriangleEntity: Loading vertex shader from %ls", shaderVertexPath);
 
     // Load shaders from PROJECT_ROOT_DIR/shaders folder
-    HRESULT result = D3DCompileFromFile(shaderVertexPath, nullptr, nullptr, "main", "vs_5_0", compileFlags, 0, &this->VertexShader, nullptr);
-    this->CheckHandle(result, "Failed to compile vertex shader");
+    HRESULT result = D3DCompileFromFile(shaderVertexPath, nullptr, nullptr, "main", "vs_5_0", compileFlags, 0, &this->VertexShader, &errorBlob);
+    this->CheckShaderError(result, errorBlob, "Failed to compile vertex shader");
 
     const wchar_t *shaderPixelPath = SHADER_PATH("TrianglePixelShader.hlsl");
 
     this->Logger->Message("TriangleEntity: Loading pixel shader from %ls", shaderPixelPath);
 
-    result = D3DCompileFromFile(shaderPixelPath, nullptr, nullptr, "main", "ps_5_0", compileFlags, 0, &this->PixelShader, nullptr);
-    this->CheckHandle(result, "Failed to compile pixel shader");
+    errorBlob = nullptr;
+    result = D3DCompileFromFile(shaderPixelPath, nullptr, nullptr, "main", "ps_5_0", compileFlags, 0, &this->PixelShader, &errorBlob);
+    this->CheckShaderError(result, errorBlob, "Failed to compile pixel shader");
 }
 
 void TriangleEntity::CreateVertexBuffer(Microsoft::WRL::ComPtr<ID3D12Device> device)
@@ -210,4 +251,28 @@ void TriangleEntity::CreateVertexBuffer(Microsoft::WRL::ComPtr<ID3D12Device> dev
     memcpy(vertexDataBegin, this->Vertices, sizeof(this->Vertices));
 
     this->VertexBuffer->Unmap(0, nullptr);
+}
+
+void TriangleEntity::CreateConstantBuffer(Microsoft::WRL::ComPtr<ID3D12Device> device)
+{
+    D3D12_RESOURCE_DESC constantBufferDesc = {};
+    constantBufferDesc.Width = sizeof(ConstantBufferPayload);
+    constantBufferDesc.Height = 1;
+    constantBufferDesc.DepthOrArraySize = 1;
+    constantBufferDesc.MipLevels = 1;
+    constantBufferDesc.Format = DXGI_FORMAT_UNKNOWN;
+    constantBufferDesc.SampleDesc.Count = 1;
+    constantBufferDesc.SampleDesc.Quality = 0;
+    constantBufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    constantBufferDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+    constantBufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+
+    D3D12_HEAP_PROPERTIES heapProperties = {};
+    heapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
+    heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+    heapProperties.CreationNodeMask = 1;
+    heapProperties.VisibleNodeMask = 1;
+
+    device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &constantBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&this->ConstantBuffer));
 }

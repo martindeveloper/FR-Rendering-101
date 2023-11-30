@@ -17,6 +17,12 @@ class TriangleEntity
 private:
     Logger *Logger = nullptr;
 
+    struct ConstantBufferPayload
+    {
+        // "Time"
+        float Time = 0.0f;
+    };
+
     const Vertex Vertices[3] = {
         {DirectX::XMFLOAT3(0.0f, 0.25f, 0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f)},
         {DirectX::XMFLOAT3(0.25f, -0.25f, 0.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)},
@@ -27,19 +33,22 @@ private:
     Microsoft::WRL::ComPtr<ID3DBlob> VertexShader = nullptr;
     Microsoft::WRL::ComPtr<ID3DBlob> PixelShader = nullptr;
     Microsoft::WRL::ComPtr<ID3D12Resource> VertexBuffer = nullptr;
+    Microsoft::WRL::ComPtr<ID3D12Resource> ConstantBuffer = nullptr;
 
 public:
     TriangleEntity();
 
     void OnResourceCreate(Microsoft::WRL::ComPtr<ID3D12Device> device);
-    void OnRender(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList);
+    void OnRender(UINT frame, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList);
 
 private:
     void CreateRootSignature(Microsoft::WRL::ComPtr<ID3D12Device> device);
     void CreatePipelineState(Microsoft::WRL::ComPtr<ID3D12Device> device);
     void CreateVertexBuffer(Microsoft::WRL::ComPtr<ID3D12Device> device);
+    void CreateConstantBuffer(Microsoft::WRL::ComPtr<ID3D12Device> device);
     void CreateShaders();
 
+    inline void CheckShaderError(HRESULT result, ID3DBlob *blob, const char *message, bool shouldCrash = true);
     inline void CheckHandle(HRESULT result, const char *message, bool shouldCrash = true);
 };
 
