@@ -109,6 +109,12 @@ void RendererDirectX12::Render()
     rtvHandle.ptr += this->CurrentFrameBufferIndex * this->Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     this->CommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
+    // Clear render target
+    if (this->ShouldClear)
+    {
+        this->CommandList->ClearRenderTargetView(rtvHandle, this->ClearColor, 0, nullptr);
+    }
+
     // Set viewport
     D3D12_VIEWPORT viewport = {};
     viewport.TopLeftX = 0;

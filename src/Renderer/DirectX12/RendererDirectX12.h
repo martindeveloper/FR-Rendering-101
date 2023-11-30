@@ -56,8 +56,10 @@ private:
     HANDLE FrameFenceEvent = nullptr;
 
     UINT FrameCounter = 0;
+    FLOAT ClearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
 
     bool ShouldRender = true;
+    bool ShouldClear = true;
 
     // Triangle entity
     TriangleEntity *Triangle = nullptr;
@@ -94,7 +96,7 @@ private:
     void CreateRenderTargetViews();
     void CleanupRenderTargetViews();
 
-    // Frame fence
+    // Frame
     void CreateFrameFence();
 
     // Utility functions
