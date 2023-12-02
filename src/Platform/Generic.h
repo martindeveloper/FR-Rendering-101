@@ -21,13 +21,18 @@
 #define PLATFORM_WINDOWS
 #define PLATFORM_NAME "Windows"
 #else
-#pragma error("Platform.Generic: Unsupported platform")
+#error "Platform.Generic: Unsupported platform"
 #endif
 
-#ifndef PROJECT_ROOT_DIR
-#define PROJECT_ROOT_DIR L"" // Should be set by CMake
+#ifndef PROJECT_ROOT_DIRECTORY
+#error "Platform.Generic: PROJECT_ROOT_DIRECTORY is not defined"
 #endif
 
-#define SHADER_PATH(shader) PROJECT_ROOT_DIR L"\\shaders\\" L##shader
+#ifndef PROJECT_SHADER_BYTECODE_DIRECTORY
+#error "Platform.Generic: PROJECT_SHADER_BYTECODE_DIRECTORY is not defined"
+#endif
+
+#define SHADER_PATH(shader) PROJECT_ROOT_DIRECTORY L"\\shaders\\" L##shader
+#define SHADER_BYTECODE_PATH(shader, type) PROJECT_SHADER_BYTECODE_DIRECTORY L"\\" L##shader L##type L"Shader.hlsl.dxil"
 
 #endif // PLATFORM_GENERIC_H

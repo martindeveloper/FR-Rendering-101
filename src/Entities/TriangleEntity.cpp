@@ -5,26 +5,6 @@ TriangleEntity::TriangleEntity()
     this->Logger = Platform::GetLogger();
 }
 
-void TriangleEntity::CheckShaderError(HRESULT result, ID3DBlob *blob, const char *message, bool shouldCrash)
-{
-    if (FAILED(result))
-    {
-        this->Logger->Fatal("TriangleEntity: %s", message);
-
-        if (blob != nullptr)
-        {
-            this->Logger->Fatal("TriangleEntity: %s", reinterpret_cast<const char *>(blob->GetBufferPointer()));
-        }
-
-        Platform::TriggerBreakpoint();
-
-        if (shouldCrash)
-        {
-            Platform::TriggerCrash();
-        }
-    }
-}
-
 void TriangleEntity::OnResourceCreate(Microsoft::WRL::ComPtr<ID3D12Device> device)
 {
     this->CreateRootSignature(device);
@@ -181,23 +161,15 @@ void TriangleEntity::CreateShaders()
 #ifdef BUILD_TYPE_DEBUG
     compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
-    ID3DBlob *errorBlob = nullptr;
 
-    const wchar_t *shaderVertexPath = SHADER_PATH("TriangleVertexShader.hlsl");
+    const wchar_t *shaderVertexPath = SHADER_BYTECODE_PATH("Triangle", "Vertex");
+    const wchar_t *shaderPixelPath = SHADER_BYTECODE_PATH("Triangle", "Pixel");
 
-    this->Logger->Message("TriangleEntity: Loading vertex shader from %ls", shaderVertexPath);
+    this->Logger->Message("TriangleEntity: Loading vertex shader bytecode from %ls", shaderVertexPath);
+    DirectX12Tools::LoadShaderByteCode(shaderVertexPath, &this->VertexShader);
 
-    // Load shaders from PROJECT_ROOT_DIR/shaders folder
-    HRESULT result = D3DCompileFromFile(shaderVertexPath, nullptr, nullptr, "main", "vs_5_0", compileFlags, 0, &this->VertexShader, &errorBlob);
-    this->CheckShaderError(result, errorBlob, "Failed to compile vertex shader");
-
-    const wchar_t *shaderPixelPath = SHADER_PATH("TrianglePixelShader.hlsl");
-
-    this->Logger->Message("TriangleEntity: Loading pixel shader from %ls", shaderPixelPath);
-
-    errorBlob = nullptr;
-    result = D3DCompileFromFile(shaderPixelPath, nullptr, nullptr, "main", "ps_5_0", compileFlags, 0, &this->PixelShader, &errorBlob);
-    this->CheckShaderError(result, errorBlob, "Failed to compile pixel shader");
+    this->Logger->Message("TriangleEntity: Loading pixel shader bytecode from %ls", shaderPixelPath);
+    DirectX12Tools::LoadShaderByteCode(shaderPixelPath, &this->PixelShader);
 }
 
 void TriangleEntity::CreateVertexBuffer(Microsoft::WRL::ComPtr<ID3D12Device> device)

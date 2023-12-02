@@ -11,6 +11,7 @@
 #include "../Platform/Generic.h"
 #include "../Platform/Platform.h"
 #include "../Renderer/DirectX12/Vertex.h"
+#include "../Renderer/DirectX12/DirectX12Tools.h"
 
 class TriangleEntity
 {
@@ -47,8 +48,6 @@ private:
     void CreateVertexBuffer(Microsoft::WRL::ComPtr<ID3D12Device> device);
     void CreateConstantBuffer(Microsoft::WRL::ComPtr<ID3D12Device> device);
     void CreateShaders();
-
-    inline void CheckShaderError(HRESULT result, ID3DBlob *blob, const char *message, bool shouldCrash = true);
 };
 
 #endif // TRIANGLE_ENTITY_H
