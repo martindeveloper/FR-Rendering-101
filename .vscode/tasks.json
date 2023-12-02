@@ -31,6 +31,15 @@
       "problemMatcher": ["$msCompile"]
     },
     {
+      "label": "Build Shaders",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "build/", "--config", "Debug", "--target", "Shaders"],
+      "dependsOn": ["Configure"],
+      "group": "build",
+      "problemMatcher": ["$msCompile"]
+    },
+    {
       "label": "Clean",
       "type": "shell",
       "command": "cmake",
