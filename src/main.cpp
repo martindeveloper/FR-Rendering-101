@@ -1,8 +1,6 @@
 #include "Platform/Generic.h"
 #include "Platform/Windows/Windows.h"
-#include "Application/Application.h"
-
-using namespace Platform::Windows;
+#include "Core/Application.h"
 
 /**
  * Windows entry point
@@ -10,10 +8,10 @@ using namespace Platform::Windows;
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPSTR pCmdLine, _In_ int nCmdShow)
 {
     // Entry point payload
-    EntrypointPayload entrypointPayload{hInstance, NULL, pCmdLine, nCmdShow};
+    Platform::Windows::EntrypointPayload entrypointPayload{hInstance, NULL, pCmdLine, nCmdShow};
 
     // Create application
-    Application application(entrypointPayload);
+    Core::Application application(entrypointPayload);
     application.Run();
 
     return 0;

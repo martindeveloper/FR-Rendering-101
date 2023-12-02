@@ -2,13 +2,15 @@
 
 #include "Application.h"
 
+using namespace Core;
+
 Application::Application(struct Platform::Windows::EntrypointPayload payload)
 {
     // Initialize logger
     this->Logger = Platform::GetLogger();
 
     // Initialize window properties
-    this->WindowProperties = new ApplicationWindowProperties();
+    this->WindowProperties = new Core::WindowProperties();
     this->WindowProperties->Title = STRING_NATIVE("Flying Rat Rendering 101");
     this->WindowProperties->ComClassName = STRING_NATIVE("FlyingRatRendering101");
     this->WindowProperties->WindowShowStyle = payload.nCmdShow;
@@ -20,7 +22,7 @@ Application::Application(struct Platform::Windows::EntrypointPayload payload)
     this->WindowProperties->CursorHandle = LoadCursorW(NULL, IDC_ARROW);
 
     // Create window wrapper
-    this->Window = new ApplicationWindow(this->WindowProperties);
+    this->Window = new Core::Window(this->WindowProperties);
 }
 
 Application::~Application()

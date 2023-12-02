@@ -1,11 +1,13 @@
-#include "ApplicationWindow.h"
+#include "Window.h"
 
-ApplicationWindow::ApplicationWindow(ApplicationWindowProperties *properties)
+using namespace Core;
+
+Window::Window(WindowProperties *properties)
     : Properties(properties)
 {
 }
 
-ApplicationWindow::~ApplicationWindow()
+Window::~Window()
 {
     if (this->Renderer != nullptr)
     {
@@ -13,7 +15,7 @@ ApplicationWindow::~ApplicationWindow()
     }
 }
 
-void ApplicationWindow::OnCreate(HWND windowHandle)
+void Window::OnCreate(HWND windowHandle)
 {
     this->Properties->WindowHandle = windowHandle;
 
@@ -22,22 +24,22 @@ void ApplicationWindow::OnCreate(HWND windowHandle)
     this->Renderer->Initialize(windowHandle, this->Properties->Size.Width, this->Properties->Size.Height);
 }
 
-void ApplicationWindow::OnQuit()
+void Window::OnQuit()
 {
     PostQuitMessage(0);
 }
 
-void ApplicationWindow::OnPaint()
+void Window::OnPaint()
 {
     this->Renderer->Render();
 }
 
-void ApplicationWindow::OnSetCursor()
+void Window::OnSetCursor()
 {
     SetCursor(this->Properties->CursorHandle);
 }
 
-void ApplicationWindow::OnSizeChange(UINT width, UINT height)
+void Window::OnSizeChange(UINT width, UINT height)
 {
     this->Properties->Size.Width = width;
     this->Properties->Size.Height = height;
