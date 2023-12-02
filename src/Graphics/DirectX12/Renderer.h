@@ -10,8 +10,10 @@
 #include <d3d12sdklayers.h>
 
 #include "../../Platform/Platform.h"
+#include "../../Scene/Entities/TriangleEntity.h"
+#include "../../Scene/SceneGraph.h"
+#include "../../Scene/SceneNode.h"
 #include "Vertex.h"
-#include "../../Entities/TriangleEntity.h"
 
 namespace Graphics::DirectX12
 {
@@ -26,6 +28,17 @@ namespace Graphics::DirectX12
     };
 
     /**
+     * @brief The FrameMetadata struct
+     * @note Not a best way, as in real world scenario we would have multiple command lists per frame, and multiple frames in flight
+     */
+    struct FrameMetadata
+    {
+        UINT FrameCounter;
+        D3D12_RESOURCE_BARRIER SwapChainBufferResourceBarrier;
+        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> CommandList;
+    };
+
+    /**
      * @brief The Renderer::DirectX12::Renderer class
      */
     class Renderer
@@ -35,12 +48,22 @@ namespace Graphics::DirectX12
 
         HWND WindowHandle = nullptr;
 
-        DXGI_FORMAT FrameBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+        // Frame
         UINT FrameBufferWidth = 0;
         UINT FrameBufferHeight = 0;
-        static const UINT BufferCount = 2;
         UINT CurrentFrameBufferIndex = 0;
+        static const UINT SwapChainBufferCount = 2;
+        DXGI_FORMAT FrameBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
+        Microsoft::WRL::ComPtr<ID3D12Fence> FrameFence = nullptr;
+        UINT64 FrameFenceValues[Renderer::SwapChainBufferCount] = {1, 1};
+        HANDLE FrameFenceEvent = nullptr;
+
+        UINT FrameCounter = 0;
+        FLOAT FrameClearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+        bool IsFrameInFlight = false;
+
+        // DX12 interfaces
         Microsoft::WRL::ComPtr<IDXGIFactory> DXGIFactory = nullptr;
         Microsoft::WRL::ComPtr<ID3D12Device> Device = nullptr;
         Microsoft::WRL::ComPtr<ID3D12Debug> DebugInterface = nullptr;
@@ -50,21 +73,10 @@ namespace Graphics::DirectX12
         Microsoft::WRL::ComPtr<ID3D12CommandAllocator> CommandAllocator = nullptr;
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> CommandList = nullptr;
         Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> RTVHeap = nullptr;
-        Microsoft::WRL::ComPtr<ID3D12Resource> RenderTargets[Renderer::BufferCount] = {nullptr, nullptr};
-
-        // Frame fence
-        Microsoft::WRL::ComPtr<ID3D12Fence> FrameFence = nullptr;
-        UINT64 FrameFenceValues[Renderer::BufferCount] = {1, 1};
-        HANDLE FrameFenceEvent = nullptr;
-
-        UINT FrameCounter = 0;
-        FLOAT ClearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+        Microsoft::WRL::ComPtr<ID3D12Resource> RenderTargets[Renderer::SwapChainBufferCount] = {nullptr, nullptr};
 
         bool ShouldRender = true;
         bool ShouldClear = true;
-
-        // Triangle entity
-        Entities::TriangleEntity *Triangle = nullptr;
 
     public:
         Renderer();
@@ -79,9 +91,14 @@ namespace Graphics::DirectX12
         void Initialize(HWND windowHandle, UINT width, UINT height);
 
         /**
-         * @brief Render one frame
+         * @brief Begin a frame
          */
-        void Render();
+        FrameMetadata *BeginFrame();
+
+        /**
+         * @brief End a frame
+         */
+        void EndFrame(FrameMetadata *frameMetaData);
 
         /**
          * @brief Resize swap chain
@@ -89,6 +106,12 @@ namespace Graphics::DirectX12
          * @param height
          */
         void Resize(UINT width, UINT height);
+
+        /**
+         * @brief Get device
+         * @return
+         */
+        Microsoft::WRL::ComPtr<ID3D12Device> GetDevice() const { return this->Device; };
 
     private:
         void CreateDevice();

@@ -1,10 +1,14 @@
 #include "TriangleEntity.h"
 
-using namespace Entities;
+using namespace Scene::Entities;
 
 TriangleEntity::TriangleEntity()
 {
     this->Logger = Platform::GetLogger();
+}
+
+TriangleEntity::~TriangleEntity()
+{
 }
 
 void TriangleEntity::OnResourceCreate(Microsoft::WRL::ComPtr<ID3D12Device> device)
@@ -16,14 +20,19 @@ void TriangleEntity::OnResourceCreate(Microsoft::WRL::ComPtr<ID3D12Device> devic
     this->CreateConstantBuffer(device);
 }
 
-void TriangleEntity::OnRender(UINT frame, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList)
+void TriangleEntity::OnUpdate(uint64_t frame)
+{
+    this->Frame = frame;
+}
+
+void TriangleEntity::OnRender(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList)
 {
     // Prepare constant buffer
     ConstantBufferPayload *constantBuffer = nullptr;
     this->ConstantBuffer->Map(0, nullptr, reinterpret_cast<void **>(&constantBuffer));
 
     // Not great, but we need some time-based animation
-    constantBuffer->Time = static_cast<float>(frame) / 100.0f;
+    constantBuffer->Time = static_cast<float>(this->Frame) / 100.0f;
 
     this->ConstantBuffer->Unmap(0, nullptr);
 

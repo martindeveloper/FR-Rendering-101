@@ -6,6 +6,7 @@
 #include "../Platform/Platform.h"
 #include "WindowProperties.h"
 
+#include "../Scene/SceneGraph.h"
 #include "../Graphics/DirectX12/Renderer.h"
 
 namespace Core
@@ -15,10 +16,13 @@ namespace Core
     private:
         WindowProperties *Properties;
         Graphics::DirectX12::Renderer *Renderer;
+        Scene::SceneGraph *SceneGraph;
 
     public:
         Window(WindowProperties *properties);
         ~Window();
+
+        void SetSceneGraph(Scene::SceneGraph *sceneGraph) { this->SceneGraph = sceneGraph; };
 
         void OnCreate(HWND windowHandle);
         void OnQuit();

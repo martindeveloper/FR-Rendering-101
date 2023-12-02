@@ -8,17 +8,20 @@
 #include <wrl.h>
 #include <d3dcompiler.h>
 
-#include "../Platform/Generic.h"
-#include "../Platform/Platform.h"
-#include "../Graphics/DirectX12/Vertex.h"
-#include "../Graphics/DirectX12/Tools.h"
+#include "../IEntity.h"
+#include "../../Platform/Generic.h"
+#include "../../Platform/Platform.h"
+#include "../../Graphics/DirectX12/Vertex.h"
+#include "../../Graphics/DirectX12/Tools.h"
 
-namespace Entities
+namespace Scene::Entities
 {
-    class TriangleEntity
+    class TriangleEntity : public IEntity
     {
     private:
         Diagnostics::Logger *Logger = nullptr;
+
+        uint64_t Frame = 0;
 
         struct ConstantBufferPayload
         {
@@ -40,9 +43,11 @@ namespace Entities
 
     public:
         TriangleEntity();
+        ~TriangleEntity();
 
         void OnResourceCreate(Microsoft::WRL::ComPtr<ID3D12Device> device);
-        void OnRender(UINT frame, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList);
+        void OnRender(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList);
+        void OnUpdate(uint64_t frame);
 
     private:
         void CreateRootSignature(Microsoft::WRL::ComPtr<ID3D12Device> device);

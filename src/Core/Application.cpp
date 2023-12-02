@@ -6,6 +6,8 @@ using namespace Core;
 
 Application::Application(struct Platform::Windows::EntrypointPayload payload)
 {
+    this->IsInitialized = false;
+
     // Initialize logger
     this->Logger = Platform::GetLogger();
 
@@ -108,8 +110,20 @@ LRESULT Application::HandleWindowMessage(HWND windowHandle, UINT messageId, WPAR
     return DefWindowProc(windowHandle, messageId, wParam, lParam);
 }
 
-int Application::Run()
+void Application::SetInitialSceneGraph(Scene::SceneGraph *sceneGraph)
 {
+    this->Window->SetSceneGraph(sceneGraph);
+}
+
+bool Application::Initialize()
+{
+    if (this->IsInitialized)
+    {
+        this->Logger->Fatal("Application is already initialized");
+
+        return false;
+    }
+
     // Define window class
     WNDCLASSW windowClass = {};
     windowClass.lpfnWndProc = WindowProcedureStatic;
@@ -120,7 +134,7 @@ int Application::Run()
     RegisterClassW(&windowClass);
 
     // Create window
-    HWND windowHandle = CreateWindowExW(
+    this->WindowHandle = CreateWindowExW(
         0,
         this->WindowProperties->ComClassName,
         this->WindowProperties->Title,
@@ -131,15 +145,29 @@ int Application::Run()
         this->WindowProperties->WindowInstanceHandle,
         this);
 
-    if (windowHandle == NULL)
+    if (this->WindowHandle == NULL)
     {
         this->Logger->Fatal("Failed to create window");
 
-        return 0;
+        return false;
+    }
+
+    this->IsInitialized = true;
+
+    return true;
+}
+
+int Application::Run()
+{
+    if (!this->IsInitialized)
+    {
+        this->Logger->Fatal("Application is not initialized, unable to run");
+
+        return -1;
     }
 
     // Show window
-    ShowWindow(windowHandle, this->WindowProperties->WindowShowStyle);
+    ShowWindow(this->WindowHandle, this->WindowProperties->WindowShowStyle);
 
     // Message loop
     MSG windowMessage = {};

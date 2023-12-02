@@ -27,10 +27,6 @@ void Renderer::Initialize(HWND windowHandle, UINT width, UINT height)
     this->CreateRenderTargetViews();
 
     this->CreateFrameFence();
-
-    // Triangle entity
-    this->Triangle = new Entities::TriangleEntity();
-    this->Triangle->OnResourceCreate(this->Device);
 }
 
 void Renderer::CreateFrameFence()
@@ -81,12 +77,20 @@ void Renderer::WaitForGPU()
     this->FrameFenceValues[this->CurrentFrameBufferIndex] = currentFenceValue + 1;
 }
 
-void Renderer::Render()
+FrameMetadata *Renderer::BeginFrame()
 {
     if (this->ShouldRender == false)
     {
-        return;
+        return nullptr;
     }
+
+    if (this->IsFrameInFlight)
+    {
+        this->Logger->Fatal("Renderer::BeginFrame: Frame is already in flight");
+        return nullptr;
+    }
+
+    this->IsFrameInFlight = true;
 
     // Ensure that the GPU is done rendering
     this->WaitForGPU();
@@ -114,7 +118,7 @@ void Renderer::Render()
     // Clear render target
     if (this->ShouldClear)
     {
-        this->CommandList->ClearRenderTargetView(rtvHandle, this->ClearColor, 0, nullptr);
+        this->CommandList->ClearRenderTargetView(rtvHandle, this->FrameClearColor, 0, nullptr);
     }
 
     // Set viewport
@@ -137,8 +141,19 @@ void Renderer::Render()
 
     this->CommandList->RSSetScissorRects(1, &scissorRectangle);
 
-    // Triangle entity
-    this->Triangle->OnRender(this->FrameCounter, this->CommandList);
+    FrameMetadata *currentFrameMetaData = new FrameMetadata();
+
+    // Set command list and frame counter
+    currentFrameMetaData->SwapChainBufferResourceBarrier = resourceBarrier;
+    currentFrameMetaData->CommandList = this->CommandList;
+    currentFrameMetaData->FrameCounter = this->FrameCounter;
+
+    return currentFrameMetaData;
+}
+
+void Renderer::EndFrame(FrameMetadata *frameMetaData)
+{
+    D3D12_RESOURCE_BARRIER resourceBarrier = frameMetaData->SwapChainBufferResourceBarrier;
 
     // Transition swap chain buffer to present
     resourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
@@ -164,6 +179,10 @@ void Renderer::Render()
 
     // Increment frame counter
     this->FrameCounter++;
+
+    this->IsFrameInFlight = false;
+
+    delete frameMetaData;
 }
 
 void Renderer::Resize(UINT width, UINT height)
@@ -189,7 +208,7 @@ void Renderer::Resize(UINT width, UINT height)
     // Remove old render target views
     this->CleanupRenderTargetViews();
 
-    this->SwapChain->ResizeBuffers(this->BufferCount, width, height, this->FrameBufferFormat, 0);
+    this->SwapChain->ResizeBuffers(this->SwapChainBufferCount, width, height, this->FrameBufferFormat, 0);
 
     // Create new render target views with new buffer size
     this->CreateRenderTargetViews();
@@ -324,7 +343,7 @@ void Renderer::CreateSwapChain()
     HRESULT result;
 
     DXGI_SWAP_CHAIN_DESC1 swapChainDescription = {};
-    swapChainDescription.BufferCount = this->BufferCount;
+    swapChainDescription.BufferCount = this->SwapChainBufferCount;
     swapChainDescription.Width = this->FrameBufferWidth;
     swapChainDescription.Height = this->FrameBufferHeight;
     swapChainDescription.Format = this->FrameBufferFormat;
@@ -347,7 +366,7 @@ void Renderer::CreateSwapChain()
 
 void Renderer::CleanupRenderTargetViews()
 {
-    for (UINT i = 0; i < this->BufferCount; i++)
+    for (UINT i = 0; i < this->SwapChainBufferCount; i++)
     {
         if (this->RenderTargets[i] != nullptr)
         {
@@ -371,7 +390,7 @@ void Renderer::CreateRenderTargetViews()
     }
 
     D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDescription = {};
-    rtvHeapDescription.NumDescriptors = this->BufferCount;
+    rtvHeapDescription.NumDescriptors = this->SwapChainBufferCount;
     rtvHeapDescription.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
     rtvHeapDescription.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
@@ -382,7 +401,7 @@ void Renderer::CreateRenderTargetViews()
     UINT rtvDescriptorSize = this->Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = this->RTVHeap->GetCPUDescriptorHandleForHeapStart();
 
-    for (UINT i = 0; i < this->BufferCount; i++)
+    for (UINT i = 0; i < this->SwapChainBufferCount; i++)
     {
         result = this->SwapChain->GetBuffer(i, IID_PPV_ARGS(&this->RenderTargets[i]));
         Platform::CheckHandle(result, "Failed to get swap chain buffer");

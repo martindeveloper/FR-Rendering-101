@@ -6,6 +6,7 @@
 #include "../Platform/Platform.h"
 #include "Window.h"
 #include "WindowProperties.h"
+#include "../Scene/SceneGraph.h"
 
 namespace Core
 {
@@ -15,16 +16,28 @@ namespace Core
     class Application
     {
     private:
+        bool IsInitialized = false;
         Diagnostics::Logger *Logger = nullptr;
         Window *Window = nullptr;
         WindowProperties *WindowProperties = nullptr;
+        HWND WindowHandle = nullptr;
 
     public:
         Application(Platform::Windows::EntrypointPayload payload);
         ~Application();
 
         /**
-         * Run the application and process messages.
+         * Initialize the application and create the window.
+         */
+        bool Initialize();
+
+        /**
+         * Set the initial scene graph.
+         */
+        void SetInitialSceneGraph(Scene::SceneGraph *sceneGraph);
+
+        /**
+         * Run the application.
          */
         int Run();
 

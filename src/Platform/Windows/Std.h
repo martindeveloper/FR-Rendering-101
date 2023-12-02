@@ -6,6 +6,8 @@
 #include <numeric>
 #include <string>
 #include <vector>
+#include <memory>
+#include <wrl.h>
 
 namespace Platform::Windows
 {

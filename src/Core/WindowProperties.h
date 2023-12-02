@@ -4,6 +4,7 @@
 #define CORE_WINDOW_PROPERTIES_H
 
 #include "../Platform/Windows/Windows.h"
+#include "../Scene/SceneGraph.h"
 
 namespace Core
 {
@@ -18,6 +19,8 @@ namespace Core
             int Width;
             int Height;
         } Size;
+
+        Scene::SceneGraph *InitialSceneGraph;
 
         // Win32 handles
         HINSTANCE WindowInstanceHandle;
