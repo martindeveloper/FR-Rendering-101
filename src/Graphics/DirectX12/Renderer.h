@@ -64,7 +64,7 @@ namespace Graphics::DirectX12
         bool ShouldClear = true;
 
         // Triangle entity
-        TriangleEntity *Triangle = nullptr;
+        Entities::TriangleEntity *Triangle = nullptr;
 
     public:
         Renderer();

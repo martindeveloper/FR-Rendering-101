@@ -1,5 +1,7 @@
 #include "TriangleEntity.h"
 
+using namespace Entities;
+
 TriangleEntity::TriangleEntity()
 {
     this->Logger = Platform::GetLogger();

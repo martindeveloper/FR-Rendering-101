@@ -29,7 +29,7 @@ void Renderer::Initialize(HWND windowHandle, UINT width, UINT height)
     this->CreateFrameFence();
 
     // Triangle entity
-    this->Triangle = new TriangleEntity();
+    this->Triangle = new Entities::TriangleEntity();
     this->Triangle->OnResourceCreate(this->Device);
 }
 
