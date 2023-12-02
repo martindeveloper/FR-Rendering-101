@@ -28,12 +28,9 @@
 #ifdef UNICODE
 #define STRING_NATIVE(str) STRING_NATIVE_WIDE(str)
 #define STRING_NATIVE_LEN(str) STRING_NATIVE_WIDE_LEN(str)
-
-#pragma message("Platform.Windows.OS: Using UNICODE (Wide) types")
 #else
 #define STRING_NATIVE(str) STRING_NATIVE_ANSI(str)
 #define STRING_NATIVE_LEN(str) STRING_NATIVE_ANSI_LEN(str)
-#pragma message("Platform.Windows.OS: Using ANSI ")
 #endif
 
 // Print last error

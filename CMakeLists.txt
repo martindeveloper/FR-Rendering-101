@@ -35,16 +35,17 @@ set(SHADER_MODEL "6_0")
 file(GLOB HLSL_SOURCE_FILES "${SHADER_DIR}/*.hlsl")
 
 foreach(HLSL_FILE ${HLSL_SOURCE_FILES})
-    get_filename_component(FILE_NAME ${HLSL_FILE} NAME)
-    set(DXIL_FILE "${SHADER_OUTPUT_DIR}/${FILE_NAME}.dxil")
+    get_filename_component(SHADER_FILE_NAME ${HLSL_FILE} NAME)
+    set(DXIL_FILE_NAME "${SHADER_FILE_NAME}.dxil")
+    set(DXIL_FILE "${SHADER_OUTPUT_DIR}/${DXIL_FILE_NAME}")
 
     # Shader type
-    if(${FILE_NAME} MATCHES ".*VertexShader.hlsl")
+    if(${SHADER_FILE_NAME} MATCHES ".*VertexShader.hlsl")
         set(SHADER_TYPE "vs")
-    elseif(${FILE_NAME} MATCHES ".*PixelShader.hlsl")
+    elseif(${SHADER_FILE_NAME} MATCHES ".*PixelShader.hlsl")
         set(SHADER_TYPE "ps")
     else()
-        message(FATAL_ERROR "Unknown shader type for ${FILE_NAME}")
+        message(FATAL_ERROR "Shaders: Unknown shader type for ${SHADER_FILE_NAME}")
     endif()
 
     # Add custom command to compile HLSL to DXIL
@@ -52,7 +53,7 @@ foreach(HLSL_FILE ${HLSL_SOURCE_FILES})
         OUTPUT ${DXIL_FILE}
         COMMAND ${DXC_COMPILER} -T ${SHADER_TYPE}_${SHADER_MODEL} -E main -Fo ${DXIL_FILE} ${HLSL_FILE}
         DEPENDS ${HLSL_FILE}
-        COMMENT "Compiling ${HLSL_FILE} to ${DXIL_FILE}"
+        COMMENT "Shaders: Compiling ${SHADER_FILE_NAME} to ${DXIL_FILE_NAME}"
         VERBATIM
     )
 
