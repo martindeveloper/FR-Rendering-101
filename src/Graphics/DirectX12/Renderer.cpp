@@ -1,18 +1,20 @@
 #include "../../Platform/Platform.h"
 
-#include "RendererDirectX12.h"
+#include "Renderer.h"
 
-RendererDirectX12::RendererDirectX12()
+using namespace Graphics::DirectX12;
+
+Renderer::Renderer()
 {
     this->Logger = Platform::GetLogger();
 }
 
-RendererDirectX12::~RendererDirectX12()
+Renderer::~Renderer()
 {
     // No extra need to manually release resources because of ComPtr
 }
 
-void RendererDirectX12::Initialize(HWND windowHandle, UINT width, UINT height)
+void Renderer::Initialize(HWND windowHandle, UINT width, UINT height)
 {
     this->WindowHandle = windowHandle;
 
@@ -31,23 +33,23 @@ void RendererDirectX12::Initialize(HWND windowHandle, UINT width, UINT height)
     this->Triangle->OnResourceCreate(this->Device);
 }
 
-void RendererDirectX12::CreateFrameFence()
+void Renderer::CreateFrameFence()
 {
     // Create frame fence
     HRESULT result = this->Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&this->FrameFence));
 
     if (FAILED(result))
     {
-        this->Logger->Fatal("RendererDirectX12::CreateFrameFence: Failed to create frame fence");
+        this->Logger->Fatal("Renderer::CreateFrameFence: Failed to create frame fence");
         return;
     }
 }
 
-void RendererDirectX12::WaitForGPU()
+void Renderer::WaitForGPU()
 {
     if (!this->CommandQueue || !this->FrameFence)
     {
-        this->Logger->Fatal("RendererDirectX12::WaitForGPU: CommandQueue or FrameFence is null");
+        this->Logger->Fatal("Renderer::WaitForGPU: CommandQueue or FrameFence is null");
         return;
     }
 
@@ -55,14 +57,14 @@ void RendererDirectX12::WaitForGPU()
     HRESULT hr = this->CommandQueue->Signal(this->FrameFence.Get(), currentFenceValue);
     if (FAILED(hr))
     {
-        this->Logger->Fatal("RendererDirectX12::WaitForGPU: Failed to signal command queue");
+        this->Logger->Fatal("Renderer::WaitForGPU: Failed to signal command queue");
         return;
     }
 
     Microsoft::WRL::ComPtr<IDXGISwapChain3> swapChain3 = nullptr;
     if (FAILED(this->SwapChain.As(&swapChain3)))
     {
-        this->Logger->Fatal("RendererDirectX12::WaitForGPU: Failed to cast swap chain to IDXGISwapChain3");
+        this->Logger->Fatal("Renderer::WaitForGPU: Failed to cast swap chain to IDXGISwapChain3");
         return;
     }
 
@@ -79,7 +81,7 @@ void RendererDirectX12::WaitForGPU()
     this->FrameFenceValues[this->CurrentFrameBufferIndex] = currentFenceValue + 1;
 }
 
-void RendererDirectX12::Render()
+void Renderer::Render()
 {
     if (this->ShouldRender == false)
     {
@@ -164,11 +166,11 @@ void RendererDirectX12::Render()
     this->FrameCounter++;
 }
 
-void RendererDirectX12::Resize(UINT width, UINT height)
+void Renderer::Resize(UINT width, UINT height)
 {
     if (this->SwapChain == nullptr)
     {
-        this->Logger->Fatal("RendererDirectX12::Resize: Swap chain is null");
+        this->Logger->Fatal("Renderer::Resize: Swap chain is null");
         return;
     }
 
@@ -197,7 +199,7 @@ void RendererDirectX12::Resize(UINT width, UINT height)
     this->ShouldRender = true;
 }
 
-void RendererDirectX12::CreateDevice()
+void Renderer::CreateDevice()
 {
 #ifdef BUILD_TYPE_DEBUG
     if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&this->DebugInterface))))
@@ -211,7 +213,7 @@ void RendererDirectX12::CreateDevice()
 
     if (FAILED(result))
     {
-        this->Logger->Fatal("RendererDirectX12: Failed to create DXGI factory");
+        this->Logger->Fatal("DirectX12Renderer: Failed to create DXGI factory");
         return;
     }
 
@@ -224,21 +226,21 @@ void RendererDirectX12::CreateDevice()
 
     if (FAILED(result))
     {
-        this->Logger->Fatal("RendererDirectX12: Failed to create device");
+        this->Logger->Fatal("DirectX12Renderer: Failed to create device");
         return;
     }
 
     this->Device = device;
 }
 
-void RendererDirectX12::FindSuitableHardwareAdapter()
+void Renderer::FindSuitableHardwareAdapter()
 {
     Microsoft::WRL::ComPtr<IDXGIAdapter1> currentAdapter = nullptr;
     Microsoft::WRL::ComPtr<IDXGIFactory7> dxgiFactory7 = nullptr;
 
     if (FAILED(this->DXGIFactory.As(&dxgiFactory7)))
     {
-        this->Logger->Fatal("RendererDirectX12::FindSuitableHardwareAdapter: Failed to cast DXGI factory to DXGI factory 7");
+        this->Logger->Fatal("Renderer::FindSuitableHardwareAdapter: Failed to cast DXGI factory to DXGI factory 7");
         return;
     }
 
@@ -257,20 +259,20 @@ void RendererDirectX12::FindSuitableHardwareAdapter()
         {
             wchar_t *description = adapterDescription.Description;
 
-            this->Logger->Message("RendererDirectX12::FindSuitableHardwareAdapter: Found hardware adapter: %ls", description);
+            this->Logger->Message("Renderer::FindSuitableHardwareAdapter: Found hardware adapter: %ls", description);
 
             GPUPerformanceClass performanceClass = this->TryToDeterminePerformanceClass(&adapterDescription);
 
             switch (performanceClass)
             {
             case GPUPerformanceClass::Unknown:
-                this->Logger->Message("RendererDirectX12::FindSuitableHardwareAdapter: Unknown performance class");
+                this->Logger->Message("Renderer::FindSuitableHardwareAdapter: Unknown performance class");
                 break;
             case GPUPerformanceClass::Integrated:
-                this->Logger->Message("RendererDirectX12::FindSuitableHardwareAdapter: Integrated performance class");
+                this->Logger->Message("Renderer::FindSuitableHardwareAdapter: Integrated performance class");
                 break;
             case GPUPerformanceClass::Dedicated:
-                this->Logger->Message("RendererDirectX12::FindSuitableHardwareAdapter: Dedicated performance class");
+                this->Logger->Message("Renderer::FindSuitableHardwareAdapter: Dedicated performance class");
                 break;
             }
 
@@ -281,11 +283,11 @@ void RendererDirectX12::FindSuitableHardwareAdapter()
     this->Adapter = currentAdapter.Detach();
 }
 
-void RendererDirectX12::CreateCommandInterfaces()
+void Renderer::CreateCommandInterfaces()
 {
     if (this->Device == nullptr)
     {
-        this->Logger->Fatal("RendererDirectX12::CreateCommandInterfaces: Device is null");
+        this->Logger->Fatal("Renderer::CreateCommandInterfaces: Device is null");
         return;
     }
 
@@ -311,11 +313,11 @@ void RendererDirectX12::CreateCommandInterfaces()
     this->CommandList->Close();
 }
 
-void RendererDirectX12::CreateSwapChain()
+void Renderer::CreateSwapChain()
 {
     if (this->DXGIFactory == nullptr || this->WindowHandle == nullptr || this->CommandQueue == nullptr)
     {
-        this->Logger->Fatal("RendererDirectX12::CreateSwapChain: DXGI factory, window handle or command queue is null");
+        this->Logger->Fatal("Renderer::CreateSwapChain: DXGI factory, window handle or command queue is null");
         return;
     }
 
@@ -343,7 +345,7 @@ void RendererDirectX12::CreateSwapChain()
     this->SwapChain = swapChain.Detach();
 }
 
-void RendererDirectX12::CleanupRenderTargetViews()
+void Renderer::CleanupRenderTargetViews()
 {
     for (UINT i = 0; i < this->BufferCount; i++)
     {
@@ -360,11 +362,11 @@ void RendererDirectX12::CleanupRenderTargetViews()
     }
 }
 
-void RendererDirectX12::CreateRenderTargetViews()
+void Renderer::CreateRenderTargetViews()
 {
     if (this->Device == nullptr || this->SwapChain == nullptr)
     {
-        this->Logger->Fatal("RendererDirectX12::CreateRenderTargetView: Device or swap chain is null");
+        this->Logger->Fatal("Renderer::CreateRenderTargetView: Device or swap chain is null");
         return;
     }
 
@@ -391,7 +393,7 @@ void RendererDirectX12::CreateRenderTargetViews()
     }
 }
 
-GPUPerformanceClass RendererDirectX12::TryToDeterminePerformanceClass(DXGI_ADAPTER_DESC1 *adapterDescription)
+GPUPerformanceClass Renderer::TryToDeterminePerformanceClass(DXGI_ADAPTER_DESC1 *adapterDescription)
 {
     switch (adapterDescription->VendorId)
     {

@@ -6,13 +6,13 @@
 #include "../../Platform/Platform.h"
 #include "../ApplicationWindowProperties.h"
 
-#include "../../Renderer/DirectX12/RendererDirectX12.h"
+#include "../../Graphics/DirectX12/Renderer.h"
 
 class ApplicationWindow
 {
 private:
     ApplicationWindowProperties *Properties;
-    RendererDirectX12 *Renderer;
+    Graphics::DirectX12::Renderer *Renderer;
 
 public:
     ApplicationWindow(ApplicationWindowProperties *properties);

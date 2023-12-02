@@ -35,7 +35,7 @@ void TriangleEntity::OnRender(UINT frame, Microsoft::WRL::ComPtr<ID3D12GraphicsC
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView = {};
     vertexBufferView.BufferLocation = this->VertexBuffer->GetGPUVirtualAddress();
     vertexBufferView.SizeInBytes = sizeof(this->Vertices);
-    vertexBufferView.StrideInBytes = sizeof(Vertex);
+    vertexBufferView.StrideInBytes = sizeof(Graphics::DirectX12::Vertex);
 
     commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
 
@@ -166,10 +166,10 @@ void TriangleEntity::CreateShaders()
     const wchar_t *shaderPixelPath = SHADER_BYTECODE_PATH("Triangle", "Pixel");
 
     this->Logger->Message("TriangleEntity: Loading vertex shader bytecode from %ls", shaderVertexPath);
-    DirectX12Tools::LoadShaderByteCode(shaderVertexPath, &this->VertexShader);
+    Graphics::DirectX12::Tools::LoadShaderByteCode(shaderVertexPath, &this->VertexShader);
 
     this->Logger->Message("TriangleEntity: Loading pixel shader bytecode from %ls", shaderPixelPath);
-    DirectX12Tools::LoadShaderByteCode(shaderPixelPath, &this->PixelShader);
+    Graphics::DirectX12::Tools::LoadShaderByteCode(shaderPixelPath, &this->PixelShader);
 }
 
 void TriangleEntity::CreateVertexBuffer(Microsoft::WRL::ComPtr<ID3D12Device> device)

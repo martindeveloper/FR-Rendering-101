@@ -10,8 +10,8 @@
 
 #include "../Platform/Generic.h"
 #include "../Platform/Platform.h"
-#include "../Renderer/DirectX12/Vertex.h"
-#include "../Renderer/DirectX12/DirectX12Tools.h"
+#include "../Graphics/DirectX12/Vertex.h"
+#include "../Graphics/DirectX12/Tools.h"
 
 class TriangleEntity
 {
@@ -24,10 +24,10 @@ private:
         float Time = 0.0f;
     };
 
-    const Vertex Vertices[3] = {
-        {DirectX::XMFLOAT3(0.0f, 0.25f, 0.0f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f)},
-        {DirectX::XMFLOAT3(0.25f, -0.25f, 0.0f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)},
-        {DirectX::XMFLOAT3(-0.25f, -0.25f, 0.0f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f)}};
+    const Graphics::DirectX12::Vertex Vertices[3] = {
+        {Graphics::DirectX12::Float3(0.0f, 0.25f, 0.0f), Graphics::DirectX12::Float4(1.0f, 0.0f, 0.0f, 1.0f)},
+        {Graphics::DirectX12::Float3(0.25f, -0.25f, 0.0f), Graphics::DirectX12::Float4(0.0f, 1.0f, 0.0f, 1.0f)},
+        {Graphics::DirectX12::Float3(-0.25f, -0.25f, 0.0f), Graphics::DirectX12::Float4(0.0f, 0.0f, 1.0f, 1.0f)}};
 
     Microsoft::WRL::ComPtr<ID3D12RootSignature> RootSignature = nullptr;
     Microsoft::WRL::ComPtr<ID3D12PipelineState> PipelineState = nullptr;

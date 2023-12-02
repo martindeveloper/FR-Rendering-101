@@ -18,7 +18,7 @@ void ApplicationWindow::OnCreate(HWND windowHandle)
     this->Properties->WindowHandle = windowHandle;
 
     // Create renderer
-    this->Renderer = new RendererDirectX12();
+    this->Renderer = new Graphics::DirectX12::Renderer();
     this->Renderer->Initialize(windowHandle, this->Properties->Size.Width, this->Properties->Size.Height);
 }
 
