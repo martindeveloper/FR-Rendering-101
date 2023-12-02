@@ -7,7 +7,7 @@
 class Application
 {
 private:
-    Logger *Logger = nullptr;
+    Diagnostics::Logger *Logger = nullptr;
     ApplicationWindow *Window = nullptr;
     ApplicationWindowProperties *WindowProperties = nullptr;
 

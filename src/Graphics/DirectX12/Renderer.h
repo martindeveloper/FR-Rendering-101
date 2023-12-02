@@ -31,7 +31,7 @@ namespace Graphics::DirectX12
     class Renderer
     {
     private:
-        Logger *Logger = nullptr;
+        Diagnostics::Logger *Logger = nullptr;
 
         HWND WindowHandle = nullptr;
 

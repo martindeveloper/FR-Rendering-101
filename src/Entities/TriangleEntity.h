@@ -18,7 +18,7 @@ namespace Entities
     class TriangleEntity
     {
     private:
-        Logger *Logger = nullptr;
+        Diagnostics::Logger *Logger = nullptr;
 
         struct ConstantBufferPayload
         {

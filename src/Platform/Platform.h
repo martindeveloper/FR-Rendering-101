@@ -19,9 +19,9 @@ public:
      * @brief Get pointer to Logger singleton instance
      * @return Pointer to Logger instance
      */
-    static Logger *GetLogger()
+    static Diagnostics::Logger *GetLogger()
     {
-        static Logger instance;
+        static Diagnostics::Logger instance;
         return &instance;
     }
 
