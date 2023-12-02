@@ -12,9 +12,8 @@
 #include "../Diagnostics/Logger.h"
 
 // TODO: Very tied to Windows, should be abstracted in the future to Platform::Windows::*
-class Platform
+namespace Platform
 {
-public:
     /**
      * @brief Get pointer to Logger singleton instance
      * @return Pointer to Logger instance
@@ -32,17 +31,7 @@ public:
     static void Halt(int exitCode)
     {
         exit(exitCode);
-    };
-
-    /**
-     * @brief Triggers a crash and tries to break into debugger
-     */
-    static void TriggerCrash()
-    {
-        Platform::TriggerBreakpoint();
-
-        Platform::Halt(1);
-    };
+    }
 
     /**
      * @brief Triggers a breakpoint
@@ -52,7 +41,17 @@ public:
 #if defined(PLATFORM_WINDOWS) && defined(BUILD_TYPE_DEBUG)
         DebugBreak();
 #endif
-    };
+    }
+
+    /**
+     * @brief Triggers a crash and tries to break into debugger
+     */
+    static void TriggerCrash()
+    {
+        Platform::TriggerBreakpoint();
+
+        Platform::Halt(1);
+    }
 
     /**
      * @brief Checks HRESULT and crashes if failed
@@ -71,7 +70,7 @@ public:
                 Platform::TriggerCrash();
             }
         }
-    };
+    }
 
     /**
      * @brief Checks HRESULT and crashes if failed
@@ -84,7 +83,7 @@ public:
         DWORD fileAttributes = GetFileAttributesW(path);
 
         return (fileAttributes == INVALID_FILE_ATTRIBUTES);
-    };
+    }
 
     /**
      * @brief Load file into buffer
@@ -133,6 +132,7 @@ public:
         *bufferSize = fileSize;
 
         return true;
-    };
-};
+    }
+}
+
 #endif // PLATFORM_H

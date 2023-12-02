@@ -2,15 +2,15 @@
 #include "Platform/Windows/Windows.h"
 #include "Application/Application.h"
 
-// Windows entry point
+using namespace Platform::Windows;
+
+/**
+ * Windows entry point
+ */
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPSTR pCmdLine, _In_ int nCmdShow)
 {
     // Entry point payload
-    EntrypointPayload entrypointPayload = {};
-    entrypointPayload.hInstance = hInstance;
-    entrypointPayload.hPrevInstance = NULL;
-    entrypointPayload.pCmdLine = pCmdLine;
-    entrypointPayload.nCmdShow = nCmdShow;
+    EntrypointPayload entrypointPayload{hInstance, NULL, pCmdLine, nCmdShow};
 
     // Create application
     Application application(entrypointPayload);

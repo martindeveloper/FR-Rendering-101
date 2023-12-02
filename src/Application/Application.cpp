@@ -2,7 +2,7 @@
 
 #include "Application.h"
 
-Application::Application(struct EntrypointPayload payload)
+Application::Application(struct Platform::Windows::EntrypointPayload payload)
 {
     // Initialize logger
     this->Logger = Platform::GetLogger();

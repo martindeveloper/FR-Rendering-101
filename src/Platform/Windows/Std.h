@@ -7,4 +7,9 @@
 #include <string>
 #include <vector>
 
+namespace Platform::Windows
+{
+
+}
+
 #endif // PLATFORM_WINDOWS_STD_H

@@ -12,7 +12,7 @@ private:
     ApplicationWindowProperties *WindowProperties = nullptr;
 
 public:
-    Application(EntrypointPayload payload);
+    Application(Platform::Windows::EntrypointPayload payload);
     ~Application();
 
     int Run();

@@ -5,12 +5,24 @@
 
 #include "./OS.h"
 
-struct EntrypointPayload
+namespace Platform::Windows
 {
-	HINSTANCE hInstance;
-	HINSTANCE hPrevInstance;
-	LPSTR pCmdLine;
-	int nCmdShow;
-};
+    struct EntrypointPayload
+    {
+        HINSTANCE hInstance;
+        HINSTANCE hPrevInstance;
+        LPSTR pCmdLine;
+        int nCmdShow;
+
+        // Initializer
+        EntrypointPayload(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdShow)
+        {
+            this->hInstance = hInstance;
+            this->hPrevInstance = hPrevInstance;
+            this->pCmdLine = pCmdLine;
+            this->nCmdShow = nCmdShow;
+        };
+    };
+}
 
 #endif // PLATFORM_WINDOWS_ENTRYPOINT_H
