@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef RENDERER_DIRECTX12_H
-#define RENDERER_DIRECTX12_H
+#ifndef GRAPHICS_DIRECTX12_RENDERER_H
+#define GRAPHICS_DIRECTX12_RENDERER_H
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -107,4 +107,4 @@ namespace Graphics::DirectX12
     };
 }
 
-#endif // RENDERER_DIRECTX12_H
+#endif // GRAPHICS_DIRECTX12_RENDERER_H

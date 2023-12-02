@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef LOGGER_H
-#define LOGGER_H
+#ifndef DIAGNOSTICS_LOGGER_H
+#define DIAGNOSTICS_LOGGER_H
 
 #include <iostream>
 #include "../Platform/Generic.h"
@@ -53,4 +53,4 @@ namespace Diagnostics
     };
 }
 
-#endif // LOGGER_H
+#endif // DIAGNOSTICS_LOGGER_H

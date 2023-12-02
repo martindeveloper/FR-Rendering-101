@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef APPLICATION_WINDOW_PROPERTIES_H
-#define APPLICATION_WINDOW_PROPERTIES_H
+#ifndef CORE_WINDOW_PROPERTIES_H
+#define CORE_WINDOW_PROPERTIES_H
 
 #include "../Platform/Windows/Windows.h"
 
@@ -26,4 +26,4 @@ namespace Core
     };
 }
 
-#endif // APPLICATION_WINDOW_PROPERTIES_H
+#endif // CORE_WINDOW_PROPERTIES_H

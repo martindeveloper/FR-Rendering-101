@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef DIRECTX12_TOOLS_H
-#define DIRECTX12_TOOLS_H
+#ifndef GRAPHICS_DIRECTX12_TOOLS_H
+#define GRAPHICS_DIRECTX12_TOOLS_H
 
 #include <d3d12.h>
 #include <d3dcompiler.h>
@@ -81,4 +81,4 @@ namespace Graphics::DirectX12
     };
 }
 
-#endif // DIRECTX12_TOOLS_H
+#endif // GRAPHICS_DIRECTX12_TOOLS_H

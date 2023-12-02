@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef APPLICATION_WINDOW_H
-#define APPLICATION_WINDOW_H
+#ifndef CORE_WINDOW_H
+#define CORE_WINDOW_H
 
 #include "../Platform/Platform.h"
 #include "WindowProperties.h"
@@ -28,4 +28,4 @@ namespace Core
     };
 }
 
-#endif // APPLICATION_WINDOW_H
+#endif // CORE_WINDOW_H

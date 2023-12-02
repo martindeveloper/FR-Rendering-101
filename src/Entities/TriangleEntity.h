@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef TRIANGLE_ENTITY_H
-#define TRIANGLE_ENTITY_H
+#ifndef ENTITIES_TRIANGLE_ENTITY_H
+#define ENTITIES_TRIANGLE_ENTITY_H
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -53,4 +53,4 @@ namespace Entities
     };
 }
 
-#endif // TRIANGLE_ENTITY_H
+#endif // ENTITIES_TRIANGLE_ENTITY_H

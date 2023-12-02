@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef VERTEX_H
-#define VERTEX_H
+#ifndef GRAPHICS_DIRECTX12_VERTEX_H
+#define GRAPHICS_DIRECTX12_VERTEX_H
 
 #include <DirectXMath.h>
 
@@ -17,4 +17,4 @@ namespace Graphics::DirectX12
     };
 }
 
-#endif // VERTEX_H
+#endif // GRAPHICS_DIRECTX12_VERTEX_H
