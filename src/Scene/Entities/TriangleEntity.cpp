@@ -9,6 +9,8 @@ TriangleEntity::TriangleEntity()
 
 TriangleEntity::~TriangleEntity()
 {
+    delete this->VertexShaderBlob;
+    delete this->PixelShaderBlob;
 }
 
 void TriangleEntity::OnResourceCreate(Microsoft::WRL::ComPtr<ID3D12Device> device)
@@ -102,8 +104,8 @@ void TriangleEntity::CreatePipelineState(Microsoft::WRL::ComPtr<ID3D12Device> de
     D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineStateDescription = {};
     pipelineStateDescription.InputLayout = {inputElement, inputElementCount};
     pipelineStateDescription.pRootSignature = this->RootSignature.Get();
-    pipelineStateDescription.VS = {reinterpret_cast<BYTE *>(this->VertexShader->GetBufferPointer()), this->VertexShader->GetBufferSize()};
-    pipelineStateDescription.PS = {reinterpret_cast<BYTE *>(this->PixelShader->GetBufferPointer()), this->PixelShader->GetBufferSize()};
+    pipelineStateDescription.VS = {reinterpret_cast<BYTE *>(this->VertexShaderBlob->GetBufferPointer()), this->VertexShaderBlob->GetBufferSize()};
+    pipelineStateDescription.PS = {reinterpret_cast<BYTE *>(this->PixelShaderBlob->GetBufferPointer()), this->PixelShaderBlob->GetBufferSize()};
 
     D3D12_RASTERIZER_DESC rasterizerDescription = {};
     rasterizerDescription.FillMode = D3D12_FILL_MODE_SOLID;
@@ -177,10 +179,10 @@ void TriangleEntity::CreateShaders()
     const wchar_t *shaderPixelPath = SHADER_BYTECODE_PATH("Triangle", "Pixel");
 
     this->Logger->Message("TriangleEntity: Loading vertex shader bytecode from %ls", shaderVertexPath);
-    Graphics::DirectX12::Tools::LoadShaderByteCode(shaderVertexPath, &this->VertexShader);
+    Graphics::DirectX12::Tools::LoadShaderByteCode(shaderVertexPath, &this->VertexShaderBlob);
 
     this->Logger->Message("TriangleEntity: Loading pixel shader bytecode from %ls", shaderPixelPath);
-    Graphics::DirectX12::Tools::LoadShaderByteCode(shaderPixelPath, &this->PixelShader);
+    Graphics::DirectX12::Tools::LoadShaderByteCode(shaderPixelPath, &this->PixelShaderBlob);
 }
 
 void TriangleEntity::CreateVertexBuffer(Microsoft::WRL::ComPtr<ID3D12Device> device)

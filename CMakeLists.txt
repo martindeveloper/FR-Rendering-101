@@ -25,6 +25,9 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 )
 
 if (MSVC)
+    message(STATUS "[Executable] Using MSVC compiler")
+    message(STATUS "[Executable] Will try to disable RTTI and exceptions in the CRT")
+
     # Add extra compilation flags specific to MSVC
     # /GR- disables RTTI
     # /EHs-c- disables exceptions
@@ -48,6 +51,5 @@ if (MSVC)
         gdi32.lib
         d3d12.lib
         dxgi.lib
-        d3dcompiler.lib
     )
 endif()

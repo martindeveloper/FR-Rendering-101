@@ -34,16 +34,16 @@ namespace Scene::Entities
             {Graphics::DirectX12::Float3(0.25f, -0.25f, 0.0f), Graphics::DirectX12::Float4(0.0f, 1.0f, 0.0f, 1.0f)},
             {Graphics::DirectX12::Float3(-0.25f, -0.25f, 0.0f), Graphics::DirectX12::Float4(0.0f, 0.0f, 1.0f, 1.0f)}};
 
+        Graphics::DirectX12::ShaderByteCodeBlob *VertexShaderBlob = nullptr;
+        Graphics::DirectX12::ShaderByteCodeBlob *PixelShaderBlob = nullptr;
         Microsoft::WRL::ComPtr<ID3D12RootSignature> RootSignature = nullptr;
         Microsoft::WRL::ComPtr<ID3D12PipelineState> PipelineState = nullptr;
-        Microsoft::WRL::ComPtr<ID3DBlob> VertexShader = nullptr;
-        Microsoft::WRL::ComPtr<ID3DBlob> PixelShader = nullptr;
         Microsoft::WRL::ComPtr<ID3D12Resource> VertexBuffer = nullptr;
         Microsoft::WRL::ComPtr<ID3D12Resource> ConstantBuffer = nullptr;
 
     public:
         TriangleEntity();
-        ~TriangleEntity();
+        virtual ~TriangleEntity();
 
         void OnResourceCreate(Microsoft::WRL::ComPtr<ID3D12Device> device);
         void OnRender(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList);

@@ -11,6 +11,34 @@
 namespace Graphics::DirectX12
 {
     /**
+     * @brief The ShaderByteCodeBlob class, alternative to ID3DBlob
+     */
+    class ShaderByteCodeBlob
+    {
+    private:
+        size_t Size;
+        uint8_t *Data;
+
+    public:
+        ShaderByteCodeBlob(size_t size) : Size(size), Data(new uint8_t[size]) {}
+
+        ~ShaderByteCodeBlob()
+        {
+            delete[] Data;
+        }
+
+        void *GetBufferPointer() const
+        {
+            return Data;
+        }
+
+        size_t GetBufferSize() const
+        {
+            return Size;
+        }
+    };
+
+    /**
      * @brief The DirectX12Tools class
      */
     class Tools
@@ -19,9 +47,9 @@ namespace Graphics::DirectX12
         /**
          * @brief Load shader byte code from .dxil file
          * @param path Path to .dxil file
-         * @param byteCode Pointer to pointer to ID3DBlob
+         * @param byteCode Pointer to pointer to ShaderByteCodeBlob
          */
-        static void LoadShaderByteCode(const wchar_t *path, ID3DBlob **byteCode)
+        static void LoadShaderByteCode(const wchar_t *path, ShaderByteCodeBlob **byteCode)
         {
             // Check if file exists
             if (Platform::FileExist(path))
@@ -37,13 +65,7 @@ namespace Graphics::DirectX12
             Platform::LoadFileIntoBuffer(path, &buffer, &fileSize);
 
             // Create blob
-            HRESULT result = D3DCreateBlob(fileSize, byteCode);
-
-            if (FAILED(result))
-            {
-                Platform::GetLogger()->Fatal("Failed to create blob for file %s", path);
-                Platform::TriggerCrash();
-            }
+            *byteCode = new ShaderByteCodeBlob(fileSize);
 
             // Copy buffer to blob
             memcpy((*byteCode)->GetBufferPointer(), buffer, fileSize);
