@@ -28,6 +28,14 @@ namespace Graphics::DirectX12
     };
 
     /**
+     * @brief The DiagnosticModule enum
+     */
+    enum class DiagnosticModule
+    {
+        PixOnWindows
+    };
+
+    /**
      * @brief The FrameMetadata struct
      * @note Not a best way, as in real world scenario we would have multiple command lists per frame, and multiple frames in flight
      */
@@ -47,6 +55,10 @@ namespace Graphics::DirectX12
         Diagnostics::Logger *Logger = nullptr;
 
         HWND WindowHandle = nullptr;
+
+#ifdef BUILD_TYPE_DEBUG
+        std::vector<HMODULE> DiagnosticsModules;
+#endif
 
         // Frame
         UINT FrameBufferWidth = 0;
@@ -127,6 +139,11 @@ namespace Graphics::DirectX12
         // Utility functions
         void WaitForGPU();
         GPUPerformanceClass TryToDeterminePerformanceClass(DXGI_ADAPTER_DESC1 *adapterDescription);
+
+#ifdef BUILD_TYPE_DEBUG
+        void LoadDiagnosticsModule(Graphics::DirectX12::DiagnosticModule module);
+        void UnloadDiagnosticsModules();
+#endif
     };
 }
 

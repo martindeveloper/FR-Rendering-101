@@ -7,7 +7,7 @@ endif()
 
 # dxc version
 execute_process(COMMAND ${SHADER_DXC_COMPILER} --version OUTPUT_VARIABLE SHADER_DXC_VERSION)
-message(STATUS "[Shaders] Using dxc.exe compiler version ${SHADER_DXC_VERSION}")
+message(STATUS "[Shaders] Using dxc.exe compiler version: ${SHADER_DXC_VERSION}")
 
 # Compile HLSL shaders to DXIL
 set(SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shaders")

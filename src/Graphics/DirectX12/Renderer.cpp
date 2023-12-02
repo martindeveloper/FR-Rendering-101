@@ -21,12 +21,50 @@ void Renderer::Initialize(HWND windowHandle, UINT width, UINT height)
     this->FrameBufferWidth = width;
     this->FrameBufferHeight = height;
 
+#ifdef PIX_WINDOWS_ENABLED
+    this->LoadDiagnosticsModule(DiagnosticModule::PixOnWindows);
+#endif
+
     this->CreateDevice();
     this->CreateCommandInterfaces();
     this->CreateSwapChain();
     this->CreateRenderTargetViews();
 
     this->CreateFrameFence();
+}
+
+void Renderer::LoadDiagnosticsModule(Graphics::DirectX12::DiagnosticModule module)
+{
+    HMODULE diagnosticsModule = nullptr;
+    const char *diagnosticsModulePath = nullptr;
+
+    switch (module)
+    {
+#ifdef PIX_WINDOWS_ENABLED
+    case Graphics::DirectX12::DiagnosticModule::PixOnWindows:
+        diagnosticsModulePath = PIX_WINDOWS_CAPTURER_DLL;
+        break;
+#endif
+    }
+
+    diagnosticsModule = LoadLibraryA(diagnosticsModulePath);
+
+    if (diagnosticsModule == nullptr)
+    {
+        this->Logger->Fatal("Renderer::LoadDiagnosticsModule: Failed to load diagnostics module %s", diagnosticsModulePath);
+        return;
+    }
+
+    this->Logger->Message("Renderer::LoadDiagnosticsModule: Loaded diagnostics module %s", diagnosticsModulePath);
+    this->DiagnosticsModules.push_back(diagnosticsModule);
+}
+
+void Renderer::UnloadDiagnosticsModules()
+{
+    for (HMODULE diagnosticsModule : this->DiagnosticsModules)
+    {
+        FreeLibrary(diagnosticsModule);
+    }
 }
 
 void Renderer::CreateFrameFence()

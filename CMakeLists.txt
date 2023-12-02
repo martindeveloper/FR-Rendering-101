@@ -4,6 +4,7 @@ project(FlyingRatRendering101 VERSION 0.1.0 LANGUAGES CXX)
 
 message(STATUS "[Executable] Windows SDK version: ${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
 
+include("cmake/WindowsPix.cmake")
 include("cmake/CompileShaders.cmake")
 
 set(CMAKE_CXX_STANDARD 17)
@@ -17,12 +18,26 @@ file(GLOB_RECURSE HEADERS "src/*.h")
 # Add executable or library
 add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS})
 
-# Set definitions
+# Generic definitions
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     PROJECT_ROOT_DIRECTORY="${CMAKE_SOURCE_DIR}"
-    PROJECT_SHADER_BYTECODE_DIRECTORY="${SHADER_OUTPUT_DIR}"
-    PROJECT_SHADER_MODEL="${SHADER_MODEL}"
 )
+
+# DXC compiler
+if(SHADER_DXC_COMPILER)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        PROJECT_SHADER_BYTECODE_DIRECTORY="${SHADER_OUTPUT_DIR}"
+        PROJECT_SHADER_MODEL="${SHADER_MODEL}"
+    )
+endif()
+
+# PIX on Windows
+if (PIX_WINDOWS_CAPTURER_DLL)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        PIX_WINDOWS_CAPTURER_DLL="${PIX_WINDOWS_CAPTURER_DLL}"
+        PIX_WINDOWS_ENABLED=1
+    )
+endif()
 
 if (MSVC)
     message(STATUS "[Executable] Using MSVC compiler")
