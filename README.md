@@ -16,10 +16,13 @@ Contains source code created during rendering course.
 
 ```shell
 # Configure
-cmake -S . -B build/
+cmake -S . -B build/ -A x64
 
 # Build
-cmake --build build/
+cmake --build build/ --config <Debug|Release> --parallel 4
+
+# Build shaders only
+cmake --build build/ --config <Debug|Release> --parallel 4 --target Shaders
 
 # Clean
 cmake --build build/ --target clean
@@ -27,9 +30,10 @@ cmake --build build/ --target clean
 
 ### Using Visual Studio Code
 
-In `.vscode/tasks.json` are prepared tasks for Visual Studio Code, in order to build, clean, etc. just open command palette and select **Tasks: Run Task** or  **Tasks: Run Build Task**.
+In `.vscode/tasks.json` are prepared tasks for Visual Studio Code, in order to build, clean, etc. just open command palette and select **Tasks: Run Task** or **Tasks: Run Build Task**.
 
 ### Using Visual Studio
+
 > [!IMPORTANT]
 > Currently tested only with latest **2022** version.
 
