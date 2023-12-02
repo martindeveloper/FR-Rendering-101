@@ -49,7 +49,6 @@ private:
     void CreateShaders();
 
     inline void CheckShaderError(HRESULT result, ID3DBlob *blob, const char *message, bool shouldCrash = true);
-    inline void CheckHandle(HRESULT result, const char *message, bool shouldCrash = true);
 };
 
 #endif // TRIANGLE_ENTITY_H

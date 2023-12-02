@@ -94,11 +94,6 @@ LRESULT Application::HandleWindowMessage(HWND windowHandle, UINT messageId, WPAR
         return 1;
     }
 
-    case WM_SIZING:
-    {
-        return 1;
-    }
-
     case WM_SETCURSOR:
     {
         this->Window->OnSetCursor();

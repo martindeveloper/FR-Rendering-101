@@ -5,21 +5,6 @@ TriangleEntity::TriangleEntity()
     this->Logger = Platform::GetLogger();
 }
 
-void TriangleEntity::CheckHandle(HRESULT result, const char *message, bool shouldCrash)
-{
-    if (FAILED(result))
-    {
-        this->Logger->Fatal("TriangleEntity: %s", message);
-
-        Platform::TriggerBreakpoint();
-
-        if (shouldCrash)
-        {
-            Platform::TriggerCrash();
-        }
-    }
-}
-
 void TriangleEntity::CheckShaderError(HRESULT result, ID3DBlob *blob, const char *message, bool shouldCrash)
 {
     if (FAILED(result))
@@ -103,12 +88,12 @@ void TriangleEntity::CreateRootSignature(Microsoft::WRL::ComPtr<ID3D12Device> de
     Microsoft::WRL::ComPtr<ID3DBlob> error = nullptr;
 
     HRESULT result = D3D12SerializeRootSignature(&rootSignatureDescription, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
-    this->CheckHandle(result, "Failed to serialize root signature");
+    Platform::CheckHandle(result, "Failed to serialize root signature");
 
     Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature = nullptr;
 
     result = device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
-    this->CheckHandle(result, "Failed to create root signature");
+    Platform::CheckHandle(result, "Failed to create root signature");
 
     this->RootSignature = rootSignature.Detach();
 }
@@ -184,7 +169,7 @@ void TriangleEntity::CreatePipelineState(Microsoft::WRL::ComPtr<ID3D12Device> de
     Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineState = nullptr;
 
     HRESULT result = device->CreateGraphicsPipelineState(&pipelineStateDescription, IID_PPV_ARGS(&pipelineState));
-    this->CheckHandle(result, "Failed to create pipeline state");
+    Platform::CheckHandle(result, "Failed to create pipeline state");
 
     this->PipelineState = pipelineState.Detach();
 }
@@ -239,14 +224,14 @@ void TriangleEntity::CreateVertexBuffer(Microsoft::WRL::ComPtr<ID3D12Device> dev
     resourceDescription.Flags = D3D12_RESOURCE_FLAG_NONE;
 
     HRESULT result = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDescription, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&this->VertexBuffer));
-    this->CheckHandle(result, "Failed to create vertex buffer");
+    Platform::CheckHandle(result, "Failed to create vertex buffer");
 
     // Copy vertex data to vertex buffer
     UINT8 *vertexDataBegin = nullptr;
     D3D12_RANGE readRange = {0, 0};
 
     result = this->VertexBuffer->Map(0, &readRange, reinterpret_cast<void **>(&vertexDataBegin));
-    this->CheckHandle(result, "Failed to map vertex buffer");
+    Platform::CheckHandle(result, "Failed to map vertex buffer");
 
     memcpy(vertexDataBegin, this->Vertices, sizeof(this->Vertices));
 

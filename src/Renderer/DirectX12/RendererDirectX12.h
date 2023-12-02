@@ -102,7 +102,6 @@ private:
     // Utility functions
     void WaitForGPU();
     GPUPerformanceClass TryToDeterminePerformanceClass(DXGI_ADAPTER_DESC1 *adapterDescription);
-    inline void CheckHandle(HRESULT result, const char *message, bool shouldCrash = true);
 };
 
 #endif // RENDERER_DIRECTX12_H

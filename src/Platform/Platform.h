@@ -32,5 +32,20 @@ public:
         DebugBreak();
 #endif
     };
+
+    static void CheckHandle(HRESULT result, const char *message, bool shouldCrash = true)
+    {
+        if (FAILED(result))
+        {
+            Platform::GetLogger()->Fatal("Platform::CheckHandle: %s", message);
+
+            Platform::TriggerBreakpoint();
+
+            if (shouldCrash)
+            {
+                Platform::TriggerCrash();
+            }
+        }
+    };
 };
 #endif // PLATFORM_H

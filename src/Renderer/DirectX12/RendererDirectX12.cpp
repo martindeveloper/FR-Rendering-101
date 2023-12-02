@@ -297,15 +297,15 @@ void RendererDirectX12::CreateCommandInterfaces()
     queueDescription.Type = D3D12_COMMAND_LIST_TYPE_DIRECT; // Compute and graphics commands
 
     result = this->Device->CreateCommandQueue(&queueDescription, IID_PPV_ARGS(&this->CommandQueue));
-    this->CheckHandle(result, "Failed to create command queue");
+    Platform::CheckHandle(result, "Failed to create command queue");
 
     // Create command allocator
     result = this->Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&this->CommandAllocator));
-    this->CheckHandle(result, "Failed to create command allocator");
+    Platform::CheckHandle(result, "Failed to create command allocator");
 
     // Create command list
     result = this->Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, this->CommandAllocator.Get(), nullptr, IID_PPV_ARGS(&this->CommandList));
-    this->CheckHandle(result, "Failed to create command list");
+    Platform::CheckHandle(result, "Failed to create command list");
 
     // Close command list
     this->CommandList->Close();
@@ -335,10 +335,10 @@ void RendererDirectX12::CreateSwapChain()
     Microsoft::WRL::ComPtr<IDXGIFactory7> dxgiFactory7 = nullptr;
 
     result = this->DXGIFactory.As(&dxgiFactory7);
-    this->CheckHandle(result, "Failed to cast DXGI factory to DXGI factory 7");
+    Platform::CheckHandle(result, "Failed to cast DXGI factory to DXGI factory 7");
 
     result = dxgiFactory7->CreateSwapChainForHwnd(this->CommandQueue.Get(), this->WindowHandle, &swapChainDescription, nullptr, nullptr, &swapChain);
-    this->CheckHandle(result, "Failed to create swap chain");
+    Platform::CheckHandle(result, "Failed to create swap chain");
 
     this->SwapChain = swapChain.Detach();
 }
@@ -375,7 +375,7 @@ void RendererDirectX12::CreateRenderTargetViews()
 
     HRESULT result = this->Device->CreateDescriptorHeap(&rtvHeapDescription, IID_PPV_ARGS(&this->RTVHeap));
 
-    this->CheckHandle(result, "Failed to create descriptor heap");
+    Platform::CheckHandle(result, "Failed to create descriptor heap");
 
     UINT rtvDescriptorSize = this->Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = this->RTVHeap->GetCPUDescriptorHandleForHeapStart();
@@ -383,7 +383,7 @@ void RendererDirectX12::CreateRenderTargetViews()
     for (UINT i = 0; i < this->BufferCount; i++)
     {
         result = this->SwapChain->GetBuffer(i, IID_PPV_ARGS(&this->RenderTargets[i]));
-        this->CheckHandle(result, "Failed to get swap chain buffer");
+        Platform::CheckHandle(result, "Failed to get swap chain buffer");
 
         this->Device->CreateRenderTargetView(this->RenderTargets[i].Get(), nullptr, rtvHandle);
 
@@ -403,20 +403,5 @@ GPUPerformanceClass RendererDirectX12::TryToDeterminePerformanceClass(DXGI_ADAPT
         return GPUPerformanceClass::Integrated;
     default:
         return GPUPerformanceClass::Unknown;
-    }
-}
-
-void RendererDirectX12::CheckHandle(HRESULT result, const char *message, bool shouldCrash)
-{
-    if (FAILED(result))
-    {
-        this->Logger->Fatal("RendererDirectX12: %s", message);
-
-        Platform::TriggerBreakpoint();
-
-        if (shouldCrash)
-        {
-            Platform::TriggerCrash();
-        }
     }
 }
