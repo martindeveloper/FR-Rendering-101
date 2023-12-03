@@ -416,7 +416,6 @@ void Renderer::CleanupRenderTargetViews()
 
     if (this->RTVHeap != nullptr)
     {
-        this->RTVHeap->Release();
         this->RTVHeap = nullptr;
     }
 }

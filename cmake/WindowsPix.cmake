@@ -1,9 +1,14 @@
+if(PIX_WINDOWS_FORCE_DISABLE)
+    message(STATUS "[PIX-Windows] Forcefully disabled")
+    return()
+endif()
+
 set(PIX_WINDOWS_ROOT "C:/Program Files/Microsoft PIX")
 
 file(GLOB PIX_WINDOWS_VERSIONS RELATIVE "${PIX_WINDOWS_ROOT}" "${PIX_WINDOWS_ROOT}/*")
 
 # Function to compare PIX versions
-function(compare_versions result a b)
+function(pix_windows_compare_versions result a b)
     string(REPLACE "." ";" VERSION_LIST_A ${a})
     string(REPLACE "." ";" VERSION_LIST_B ${b})
 
@@ -23,7 +28,7 @@ endfunction()
 set(PIX_WINDOWS_LATEST_VERSION "0.0")
 
 foreach(version IN LISTS PIX_WINDOWS_VERSIONS)
-    compare_versions(cmp_result ${version} ${PIX_WINDOWS_LATEST_VERSION})
+    pix_windows_compare_versions(cmp_result ${version} ${PIX_WINDOWS_LATEST_VERSION})
     if(cmp_result EQUAL 1)
         set(PIX_WINDOWS_LATEST_VERSION ${version})
     endif()
@@ -33,3 +38,10 @@ endforeach()
 set(PIX_WINDOWS_CAPTURER_DLL "${PIX_WINDOWS_ROOT}/${PIX_WINDOWS_LATEST_VERSION}/WinPixGpuCapturer.dll")
 
 message(STATUS "[PIX-Windows] WinPixGpuCapturer.dll found at: ${PIX_WINDOWS_CAPTURER_DLL}")
+
+if (PIX_WINDOWS_CAPTURER_DLL)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        PIX_WINDOWS_CAPTURER_DLL="${PIX_WINDOWS_CAPTURER_DLL}"
+        PIX_WINDOWS_ENABLED=1
+    )
+endif()
