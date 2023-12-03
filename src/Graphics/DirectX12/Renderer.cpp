@@ -12,6 +12,8 @@ Renderer::Renderer()
 Renderer::~Renderer()
 {
     // No extra need to manually release resources because of ComPtr
+
+    this->UnloadDiagnosticsModules();
 }
 
 void Renderer::Initialize(HWND windowHandle, UINT width, UINT height)
