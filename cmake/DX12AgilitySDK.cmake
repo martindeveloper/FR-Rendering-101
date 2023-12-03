@@ -19,10 +19,9 @@ endif()
 
 # Post-build command to copy the DLL and PDB files
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${DX12_AGILITY_SDK_BIN_DIR}
-        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/external/DX12AgilitySDK"
-    COMMENT "[DX12AgilitySDK] Copying DX12AgilitySDK DLL and PDB files"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${DX12_AGILITY_SDK_BIN_DIR} "$<TARGET_FILE_DIR:${PROJECT_NAME}>/external/DX12AgilitySDK"
+    COMMAND ${CMAKE_COMMAND} -E echo "[DX12AgilitySDK] Copied DX12AgilitySDK DLLs to $<TARGET_FILE_DIR:${PROJECT_NAME}>/external/DX12AgilitySDK"
+    VERBATIM
 )
 
 if (DX12_AGILITY_SDK_ENABLED)
