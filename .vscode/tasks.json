@@ -30,15 +30,16 @@
       "group": "build",
       "problemMatcher": ["$msCompile"]
     },
-    {
-      "label": "Build Shaders",
-      "type": "shell",
-      "command": "cmake",
-      "args": ["--build", "build/", "--config", "Debug", "--target", "Shaders"],
-      "dependsOn": ["Configure"],
-      "group": "build",
-      "problemMatcher": ["$msCompile"]
-    },
+    // TODO: Fix it, due changes to CMake shader compilation, the target Shaders does not exist now.
+    // {
+    //   "label": "Build Shaders",
+    //   "type": "shell",
+    //   "command": "cmake",
+    //   "args": ["--build", "build/", "--config", "Debug", "--target", "Shaders"],
+    //   "dependsOn": ["Configure"],
+    //   "group": "build",
+    //   "problemMatcher": ["$msCompile"]
+    // },
     {
       "label": "Clean",
       "type": "shell",
