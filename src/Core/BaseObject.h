@@ -5,26 +5,20 @@
 
 #include <iostream>
 #include "../Platform/Platform.h"
+#include "ObjectUseCustomAllocatorMixin.h"
 
 namespace Core
 {
-    class BaseObject
+    /**
+     * @brief BaseObject is the base class for all objects in the "engine"
+     */
+    class BaseObject : public Core::ObjectUseCustomAllocatorMixin
     {
+        friend class Core::ObjectUseCustomAllocatorMixin;
+
     public:
-        BaseObject() {}
-        virtual ~BaseObject() {}
-
-        static void *operator new(size_t size)
-        {
-            void *pointer = Platform::Memory::Allocate(size);
-
-            return pointer;
-        }
-
-        static void operator delete(void *pointer)
-        {
-            Platform::Memory::Deallocate(pointer);
-        }
+        BaseObject() = default;
+        virtual ~BaseObject() = default;
     };
 }
 
