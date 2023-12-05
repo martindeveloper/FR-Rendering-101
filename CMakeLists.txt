@@ -27,8 +27,11 @@ include("cmake/DX12Shaders.cmake")
 include("cmake/WindowsPix.cmake")
 
 # Generic definitions
-target_compile_definitions(${PROJECT_NAME} PRIVATE
+target_compile_definitions(${PROJECT_NAME}
+    PRIVATE
     PROJECT_ROOT_DIRECTORY="${CMAKE_SOURCE_DIR}"
+    "$<$<CONFIG:Debug>:WINDOWS_ALLOCATOR_DEBUG_VERBOSE"
+    "$<$<CONFIG:Debug>:WINDOWS_ALLOCATOR_DEBUG_STATS"
 )
 
 if (MSVC)
