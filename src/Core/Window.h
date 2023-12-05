@@ -4,14 +4,14 @@
 #define CORE_WINDOW_H
 
 #include "../Platform/Platform.h"
-#include "CoreObject.h"
+#include "BaseObject.h"
 #include "WindowProperties.h"
 #include "../Scene/SceneGraph.h"
 #include "../Graphics/DirectX12/Renderer.h"
 
 namespace Core
 {
-    class Window : public CoreObject
+    class Window : public BaseObject
     {
     private:
         WindowProperties *Properties;

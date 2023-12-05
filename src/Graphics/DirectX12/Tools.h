@@ -7,14 +7,14 @@
 #include <d3dcompiler.h>
 
 #include "../../Platform/Platform.h"
-#include "../../Core/CoreObject.h"
+#include "../../Core/BaseObject.h"
 
 namespace Graphics::DirectX12
 {
     /**
      * @brief The ShaderByteCodeBlob class, alternative to ID3DBlob
      */
-    class ShaderByteCodeBlob : public Core::CoreObject
+    class ShaderByteCodeBlob : public Core::BaseObject
     {
     private:
         size_t Size;
@@ -42,7 +42,7 @@ namespace Graphics::DirectX12
     /**
      * @brief The DirectX12Tools class
      */
-    class Tools : public Core::CoreObject
+    class Tools : public Core::BaseObject
     {
     public:
         /**

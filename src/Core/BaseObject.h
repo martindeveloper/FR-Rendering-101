@@ -8,22 +8,22 @@
 
 namespace Core
 {
-    class CoreObject
+    class BaseObject
     {
     public:
-        CoreObject() {}
-        virtual ~CoreObject() {}
+        BaseObject() {}
+        virtual ~BaseObject() {}
 
         static void *operator new(size_t size)
         {
-            void *pointer = Platform::Allocate(size);
+            void *pointer = Platform::Memory::Allocate(size);
 
             return pointer;
         }
 
         static void operator delete(void *pointer)
         {
-            Platform::Deallocate(pointer);
+            Platform::Memory::Deallocate(pointer);
         }
     };
 }

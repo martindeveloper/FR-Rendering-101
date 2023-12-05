@@ -9,7 +9,7 @@
 #include <wrl.h>
 
 #include "../../Platform/Platform.h"
-#include "../../Core/CoreObject.h"
+#include "../../Core/BaseObject.h"
 #include "../../Scene/Entities/TriangleEntity.h"
 #include "../../Scene/SceneGraph.h"
 #include "../../Scene/SceneNode.h"
@@ -49,7 +49,7 @@ namespace Graphics::DirectX12
     /**
      * @brief The Renderer::DirectX12::Renderer class
      */
-    class Renderer : public Core::CoreObject
+    class Renderer : public Core::BaseObject
     {
     private:
         Diagnostics::Logger *Logger = nullptr;

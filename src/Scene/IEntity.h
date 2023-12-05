@@ -5,11 +5,11 @@
 
 #include <d3d12.h>
 #include "../Platform/Windows/Windows.h"
-#include "../Core/CoreObject.h"
+#include "../Core/BaseObject.h"
 
 namespace Scene
 {
-    class IEntity : public Core::CoreObject
+    class IEntity : public Core::BaseObject
     {
     public:
         virtual ~IEntity() = default;

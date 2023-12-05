@@ -4,7 +4,7 @@
 #define CORE_APPLICATION_H
 
 #include "../Platform/Platform.h"
-#include "CoreObject.h"
+#include "BaseObject.h"
 #include "Window.h"
 #include "WindowProperties.h"
 #include "../Scene/SceneGraph.h"
@@ -14,7 +14,7 @@ namespace Core
     /**
      * The application class is the entry point for the application.
      */
-    class Application : public CoreObject
+    class Application : public BaseObject
     {
     private:
         bool IsInitialized = false;

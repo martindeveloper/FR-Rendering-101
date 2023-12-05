@@ -4,7 +4,7 @@
 #define SCENE_DEFAULT_SCENE_GRAPH_FACTORY_H
 
 #include "../Platform/Platform.h"
-#include "../Core/CoreObject.h"
+#include "../Core/BaseObject.h"
 #include "SceneGraph.h"
 #include "SceneNode.h"
 #include "Entities/TriangleEntity.h"
@@ -12,7 +12,7 @@
 /**
  * @brief Default scene graph factory with hardcoded nodes
  */
-class DefaultSceneGraphFactory : public Core::CoreObject
+class DefaultSceneGraphFactory : public Core::BaseObject
 {
 public:
     /**
