@@ -3,14 +3,14 @@
 
 #include "MemoryAllocator.h"
 
-WindowsAllocator::~WindowsAllocator()
+MemoryAllocator::~MemoryAllocator()
 {
 #if WINDOWS_ALLOCATOR_DEBUG_STATS == 1
     this->MemoryStats.PrintStats();
 #endif
 }
 
-void *WindowsAllocator::Allocate(size_t size)
+void *MemoryAllocator::Allocate(size_t size)
 {
     void *memoryPointer = VirtualAlloc(nullptr, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 #if WINDOWS_ALLOCATOR_DEBUG_VERBOSE == 1
@@ -30,7 +30,7 @@ void *WindowsAllocator::Allocate(size_t size)
     return memoryPointer;
 }
 
-void WindowsAllocator::Deallocate(void *memoryPointer, size_t size)
+void MemoryAllocator::Deallocate(void *memoryPointer, size_t size)
 {
 #if WINDOWS_ALLOCATOR_DEBUG_VERBOSE == 1
     Diagnostics::Logger *logger = Platform::GetLogger();

@@ -10,16 +10,16 @@
 #endif
 
 /**
- * @brief WindowsAllocator is a custom memory allocator for Windows using Win32 API.
+ * @brief MemoryAllocator is a custom memory allocator for Windows using Win32 API.
  */
-class WindowsAllocator
+class MemoryAllocator
 {
 private:
 #if WINDOWS_ALLOCATOR_DEBUG_STATS == 1
     MemoryStatistics MemoryStats;
 #endif
 public:
-    ~WindowsAllocator();
+    ~MemoryAllocator();
 
     /**
      * @brief Allocate memory.

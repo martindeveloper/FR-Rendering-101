@@ -19,9 +19,9 @@ namespace Platform
      * @brief Get pointer to Allocator singleton instance
      * @return Pointer to Allocator instance
      */
-    static WindowsAllocator *GetAllocator()
+    static MemoryAllocator *GetAllocator()
     {
-        static WindowsAllocator allocator;
+        static MemoryAllocator allocator;
         return &allocator;
     }
 
