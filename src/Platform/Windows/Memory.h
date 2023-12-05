@@ -3,45 +3,34 @@
 #ifndef PLATFORM_WINDOWS_MEMORY_H
 #define PLATFORM_WINDOWS_MEMORY_H
 
-#include <map>
 #include <mutex>
+
+#ifdef WINDOWS_ALLOCATOR_DEBUG_STATS
+#include <iostream>
+
+class MemoryTracker
+{
+};
+#endif
 
 #include "OS.h"
 #include "../Platform.h"
 #include "../../Diagnostics/Logger.h"
 
-class MemoryTracker
-{
-private:
-    std::map<void *, size_t> AllocationsHistory;
-    std::mutex InternalLock;
-    Diagnostics::Logger *Logger;
-
-public:
-    MemoryTracker();
-    void Add(void *ptr, size_t size);
-    void Remove(void *ptr);
-    void PrintStats();
-};
-
 class WindowsAllocator
 {
 private:
-    Diagnostics::Logger *Logger;
-#if WINDOWS_ALLOCATOR_DEBUG_STATS
-    MemoryTracker *Tracker;
+#ifdef WINDOWS_ALLOCATOR_DEBUG_STATS
+    MemoryTracker tracker;
 #endif
-
 public:
-    WindowsAllocator();
     ~WindowsAllocator();
     void *Allocate(size_t size);
-    void Deallocate(void *ptr, size_t size = 0);
-    MemoryTracker *GetTracker();
+    void Deallocate(void *memoryPointer, size_t size = 0);
 };
 
 WindowsAllocator &g_GetAllocatorInstance();
 void *operator new(size_t size);
-void operator delete(void *ptr) noexcept;
+void operator delete(void *memoryPointer) noexcept;
 
 #endif // PLATFORM_WINDOWS_MEMORY_H

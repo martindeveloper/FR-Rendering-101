@@ -71,7 +71,7 @@ namespace Graphics::DirectX12
             memcpy((*byteCode)->GetBufferPointer(), buffer, fileSize);
 
             // Free buffer
-            free(buffer);
+            delete buffer;
         };
 
         /**
