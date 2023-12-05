@@ -30,7 +30,40 @@ public:
 };
 
 WindowsAllocator &g_GetAllocatorInstance();
+
 void *operator new(size_t size);
 void operator delete(void *memoryPointer) noexcept;
+
+namespace Platform
+{
+    /**
+     * @brief Get pointer to Allocator singleton instance
+     * @return Pointer to Allocator instance
+     */
+    static WindowsAllocator &GetAllocator()
+    {
+        return g_GetAllocatorInstance();
+    }
+
+    /**
+     * @brief Allocates memory
+     * @param size Size of memory to allocate
+     * @return Pointer to allocated memory
+     */
+    static void *Allocate(size_t size)
+    {
+        return Platform::GetAllocator().Allocate(size);
+    }
+
+    /**
+     * @brief Deallocates memory
+     * @param memoryPointer Pointer to memory to deallocate
+     * @param size Size of memory to deallocate
+     */
+    static void Deallocate(void *memoryPointer, size_t size = 0)
+    {
+        Platform::GetAllocator().Deallocate(memoryPointer, size);
+    }
+}
 
 #endif // PLATFORM_WINDOWS_MEMORY_H

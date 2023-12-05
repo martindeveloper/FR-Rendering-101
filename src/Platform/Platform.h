@@ -7,6 +7,7 @@
 
 #ifdef PLATFORM_WINDOWS
 #include "Windows/Windows.h"
+#include "Windows/Memory.h"
 #endif
 
 #include "../Diagnostics/Logger.h"

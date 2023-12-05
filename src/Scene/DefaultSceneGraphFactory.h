@@ -3,6 +3,7 @@
 #ifndef SCENE_DEFAULT_SCENE_GRAPH_FACTORY_H
 #define SCENE_DEFAULT_SCENE_GRAPH_FACTORY_H
 
+#include "../Platform/Platform.h"
 #include "SceneGraph.h"
 #include "SceneNode.h"
 #include "Entities/TriangleEntity.h"
@@ -19,7 +20,10 @@ public:
      */
     Scene::SceneGraph *Make()
     {
-        Scene::SceneGraph *sceneGraph = new Scene::SceneGraph();
+        // Scene::SceneGraph *sceneGraph = new Scene::SceneGraph();
+        // TODO: Testing placement new with custom allocator, remove this and use base class new override
+        Scene::SceneGraph *sceneGraph = static_cast<Scene::SceneGraph *>(Platform::Allocate(sizeof(Scene::SceneGraph)));
+        new (sceneGraph) Scene::SceneGraph();
 
         // Create entities
         Scene::IEntity *triangleEntity = new Scene::Entities::TriangleEntity();
