@@ -9,7 +9,6 @@
 #include <d3dcompiler.h>
 
 #include "../IEntity.h"
-#include "../../Platform/Generic.h"
 #include "../../Platform/Platform.h"
 #include "../../Graphics/DirectX12/Vertex.h"
 #include "../../Graphics/DirectX12/Tools.h"

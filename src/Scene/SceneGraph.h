@@ -4,11 +4,12 @@
 #define SCENE_SCENEGRAPH_H
 
 #include "../Platform/Windows/Std.h"
+#include "../Core/CoreObject.h"
 #include "SceneNode.h"
 
 namespace Scene
 {
-    class SceneGraph
+    class SceneGraph : public Core::CoreObject
     {
     private:
         std::vector<SceneNode *> Nodes; // Root nodes

@@ -43,11 +43,11 @@ namespace Diagnostics
 
         void Log(const char *message)
         {
-            std::cout << message << std::endl;
-
 #ifdef PLATFORM_WINDOWS
             OutputDebugStringA(message);
             OutputDebugStringA("\n");
+#else
+            std::cout << message << std::endl;
 #endif
         }
     };

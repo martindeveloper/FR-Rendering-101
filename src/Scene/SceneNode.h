@@ -4,11 +4,12 @@
 #define SCENE_SCENENODE_H
 
 #include "../Platform/Windows/Std.h"
+#include "../Core/CoreObject.h"
 #include "./IEntity.h"
 
 namespace Scene
 {
-    class SceneNode
+    class SceneNode : public Core::CoreObject
     {
     private:
         IEntity *Entity;

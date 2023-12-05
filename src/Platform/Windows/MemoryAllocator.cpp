@@ -1,7 +1,13 @@
-#include "Memory.h"
+#include "../../Platform/Platform.h"
+#include "../../Diagnostics/Logger.h"
+
+#include "MemoryAllocator.h"
 
 WindowsAllocator::~WindowsAllocator()
 {
+#if WINDOWS_ALLOCATOR_DEBUG_STATS == 1
+    this->MemoryStats.PrintStats();
+#endif
 }
 
 void *WindowsAllocator::Allocate(size_t size)
@@ -9,12 +15,16 @@ void *WindowsAllocator::Allocate(size_t size)
     void *memoryPointer = VirtualAlloc(nullptr, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 #if WINDOWS_ALLOCATOR_DEBUG_VERBOSE == 1
     Diagnostics::Logger *logger = Platform::GetLogger();
-    logger->Message("Allocated memory at 0x%08X of size %d", memoryPointer, size);
+    logger->Message("Allocated memory at %p of size %d", memoryPointer, size);
 
     if (memoryPointer == nullptr)
     {
         logger->Fatal("Failed to allocate memory");
     }
+#endif
+
+#if WINDOWS_ALLOCATOR_DEBUG_STATS == 1
+    this->MemoryStats.Allocation(size);
 #endif
 
     return memoryPointer;
@@ -24,7 +34,7 @@ void WindowsAllocator::Deallocate(void *memoryPointer, size_t size)
 {
 #if WINDOWS_ALLOCATOR_DEBUG_VERBOSE == 1
     Diagnostics::Logger *logger = Platform::GetLogger();
-    logger->Message("Deallocate memory at 0x%08X of size %d", memoryPointer, size);
+    logger->Message("Deallocate memory at %p of size %d", memoryPointer, size);
 
     if (memoryPointer == nullptr)
     {
@@ -32,21 +42,21 @@ void WindowsAllocator::Deallocate(void *memoryPointer, size_t size)
     }
 #endif
 
+#if WINDOWS_ALLOCATOR_DEBUG_STATS == 1
+    this->MemoryStats.Deallocation(size);
+#endif
+
     VirtualFree(memoryPointer, size, MEM_RELEASE);
 }
 
-WindowsAllocator &g_GetAllocatorInstance()
-{
-    static WindowsAllocator allocator;
-    return allocator;
-}
-
+#if ALLOCATOR_GLOBAL_OVERRIDE == 1
 void *operator new(size_t size)
 {
-    return g_GetAllocatorInstance().Allocate(size);
+    return Platform::Allocate(size);
 }
 
 void operator delete(void *ptr) noexcept
 {
-    g_GetAllocatorInstance().Deallocate(ptr);
+    Platform::Deallocate(ptr);
 }
+#endif

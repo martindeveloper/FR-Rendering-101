@@ -7,7 +7,7 @@
 
 #ifdef PLATFORM_WINDOWS
 #include "Windows/Windows.h"
-#include "Windows/Memory.h"
+#include "Windows/MemoryAllocator.h"
 #endif
 
 #include "../Diagnostics/Logger.h"
@@ -15,6 +15,36 @@
 // TODO: Very tied to Windows, should be abstracted in the future to Platform::Windows::*
 namespace Platform
 {
+    /**
+     * @brief Get pointer to Allocator singleton instance
+     * @return Pointer to Allocator instance
+     */
+    static WindowsAllocator *GetAllocator()
+    {
+        static WindowsAllocator allocator;
+        return &allocator;
+    }
+
+    /**
+     * @brief Allocates memory
+     * @param size Size of memory to allocate
+     * @return Pointer to allocated memory
+     */
+    static void *Allocate(size_t size)
+    {
+        return Platform::GetAllocator()->Allocate(size);
+    }
+
+    /**
+     * @brief Deallocates memory
+     * @param memoryPointer Pointer to memory to deallocate
+     * @param size Size of memory to deallocate
+     */
+    static void Deallocate(void *memoryPointer, size_t size = 0)
+    {
+        Platform::GetAllocator()->Deallocate(memoryPointer, size);
+    }
+
     /**
      * @brief Get pointer to Logger singleton instance
      * @return Pointer to Logger instance
