@@ -90,6 +90,11 @@ LRESULT Application::HandleWindowMessage(HWND windowHandle, UINT messageId, WPAR
 
     case WM_SIZE:
     {
+        if (wParam == SIZE_MINIMIZED)
+        {
+            return 1;
+        }
+
         UINT width = LOWORD(lParam);
         UINT height = HIWORD(lParam);
 

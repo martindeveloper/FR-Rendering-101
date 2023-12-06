@@ -17,6 +17,8 @@
 
 namespace Graphics::DirectX12
 {
+    using namespace Microsoft::WRL;
+
     /**
      * @brief The GPUPerformanceClass enum
      */
@@ -41,9 +43,8 @@ namespace Graphics::DirectX12
      */
     struct FrameMetadata
     {
-        UINT FrameCounter;
-        D3D12_RESOURCE_BARRIER SwapChainBufferResourceBarrier;
-        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> CommandList;
+        UINT Frame;
+        ComPtr<ID3D12GraphicsCommandList> CommandList;
     };
 
     /**
@@ -67,7 +68,7 @@ namespace Graphics::DirectX12
         static const UINT SwapChainBufferCount = 2;
         DXGI_FORMAT FrameBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-        Microsoft::WRL::ComPtr<ID3D12Fence> FrameFence = nullptr;
+        ComPtr<ID3D12Fence> FrameFence = nullptr;
         UINT64 FrameFenceValues[Renderer::SwapChainBufferCount] = {1, 1};
         HANDLE FrameFenceEvent = nullptr;
 
@@ -76,16 +77,16 @@ namespace Graphics::DirectX12
         bool IsFrameInFlight = false;
 
         // DX12 interfaces
-        Microsoft::WRL::ComPtr<IDXGIFactory> DXGIFactory = nullptr;
-        Microsoft::WRL::ComPtr<ID3D12Device> Device = nullptr;
-        Microsoft::WRL::ComPtr<ID3D12Debug> DebugInterface = nullptr;
-        Microsoft::WRL::ComPtr<IDXGIAdapter> Adapter = nullptr;
-        Microsoft::WRL::ComPtr<IDXGISwapChain> SwapChain = nullptr;
-        Microsoft::WRL::ComPtr<ID3D12CommandQueue> CommandQueue = nullptr;
-        Microsoft::WRL::ComPtr<ID3D12CommandAllocator> CommandAllocator = nullptr;
-        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> CommandList = nullptr;
-        Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> RTVHeap = nullptr;
-        Microsoft::WRL::ComPtr<ID3D12Resource> RenderTargets[Renderer::SwapChainBufferCount] = {nullptr, nullptr};
+        ComPtr<IDXGIFactory> DXGIFactory = nullptr;
+        ComPtr<ID3D12Device> Device = nullptr;
+        ComPtr<ID3D12Debug> DebugInterface = nullptr;
+        ComPtr<IDXGIAdapter> Adapter = nullptr;
+        ComPtr<IDXGISwapChain3> SwapChain = nullptr;
+        ComPtr<ID3D12CommandQueue> CommandQueue = nullptr;
+        ComPtr<ID3D12CommandAllocator> CommandAllocators[Renderer::SwapChainBufferCount] = {nullptr, nullptr};
+        ComPtr<ID3D12DescriptorHeap> RTVHeap = nullptr;
+
+        ComPtr<ID3D12Resource> RenderTargets[Renderer::SwapChainBufferCount] = {nullptr, nullptr};
 
         bool ShouldRender = true;
         bool ShouldClear = true;
@@ -123,7 +124,7 @@ namespace Graphics::DirectX12
          * @brief Get device
          * @return
          */
-        Microsoft::WRL::ComPtr<ID3D12Device> GetDevice() const { return this->Device; };
+        ComPtr<ID3D12Device> GetDevice() const { return this->Device; };
 
     private:
         void CreateDevice();
@@ -132,12 +133,16 @@ namespace Graphics::DirectX12
         void CreateSwapChain();
         void CreateRenderTargetViews();
         void CleanupRenderTargetViews();
+        ComPtr<ID3D12GraphicsCommandList> CreateCommandList();
+        D3D12_RESOURCE_BARRIER CreateTransitionBarrier(ComPtr<ID3D12Resource> resource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after);
 
         // Frame
         void CreateFrameFence();
 
         // Utility functions
-        void WaitForGPU();
+        void WaitForGPU() noexcept;
+        void WaitBeforeNextFrame();
+
         GPUPerformanceClass TryToDeterminePerformanceClass(DXGI_ADAPTER_DESC1 *adapterDescription);
 
 #ifdef BUILD_TYPE_DEBUG

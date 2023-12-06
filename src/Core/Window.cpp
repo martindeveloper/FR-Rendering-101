@@ -46,7 +46,7 @@ void Window::OnPaint()
     {
         for (Scene::SceneNode *sceneNode : *this->SceneGraph)
         {
-            sceneNode->OnUpdate(frameMetaData->FrameCounter);
+            sceneNode->OnUpdate(frameMetaData->Frame);
             sceneNode->OnRender(frameMetaData->CommandList);
         }
     }
