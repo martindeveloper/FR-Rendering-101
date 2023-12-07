@@ -13,13 +13,13 @@ TriangleEntity::~TriangleEntity()
     delete this->PixelShaderBlob;
 }
 
-void TriangleEntity::OnResourceCreate(Microsoft::WRL::ComPtr<ID3D12Device> device)
+void TriangleEntity::OnResourceCreate(Graphics::DirectX12::ResourcesInitializationMetadata *resourceMetadata)
 {
-    this->CreateRootSignature(device);
+    this->CreateRootSignature(resourceMetadata->Device);
     this->CreateShaders();
-    this->CreatePipelineState(device);
-    this->CreateVertexBuffer(device);
-    this->CreateConstantBuffer(device);
+    this->CreatePipelineState(resourceMetadata->Device);
+    this->CreateVertexBuffer(resourceMetadata->Device);
+    this->CreateConstantBuffers(resourceMetadata->Device, resourceMetadata->BackBufferCount);
 }
 
 void TriangleEntity::OnUpdate(uint64_t frame)
@@ -27,16 +27,19 @@ void TriangleEntity::OnUpdate(uint64_t frame)
     this->Frame = frame;
 }
 
-void TriangleEntity::OnRender(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList)
+void TriangleEntity::OnRender(Graphics::DirectX12::FrameMetadata *frameMetadata)
 {
+    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList = frameMetadata->CommandList;
+    UINT currentBackBufferIndex = frameMetadata->CurrentBackBufferIndex;
+
     // Prepare constant buffer
     ConstantBufferPayload *constantBuffer = nullptr;
-    this->ConstantBuffer->Map(0, nullptr, reinterpret_cast<void **>(&constantBuffer));
+    this->ConstantBuffers[currentBackBufferIndex]->Map(0, nullptr, reinterpret_cast<void **>(&constantBuffer));
 
     // Not great, but we need some time-based animation
     constantBuffer->Time = static_cast<float>(this->Frame) / 100.0f;
 
-    this->ConstantBuffer->Unmap(0, nullptr);
+    this->ConstantBuffers[currentBackBufferIndex]->Unmap(0, nullptr);
 
     // Set pipeline state
     commandList->SetPipelineState(this->PipelineState.Get());
@@ -53,7 +56,7 @@ void TriangleEntity::OnRender(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> 
     commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
 
     // Set constant buffer
-    commandList->SetGraphicsRootConstantBufferView(0, this->ConstantBuffer->GetGPUVirtualAddress());
+    commandList->SetGraphicsRootConstantBufferView(0, this->ConstantBuffers[currentBackBufferIndex]->GetGPUVirtualAddress());
 
     // Set primitive topology
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -223,26 +226,29 @@ void TriangleEntity::CreateVertexBuffer(Microsoft::WRL::ComPtr<ID3D12Device> dev
     this->VertexBuffer->Unmap(0, nullptr);
 }
 
-void TriangleEntity::CreateConstantBuffer(Microsoft::WRL::ComPtr<ID3D12Device> device)
+void TriangleEntity::CreateConstantBuffers(Microsoft::WRL::ComPtr<ID3D12Device> device, UINT backBufferCount)
 {
-    D3D12_RESOURCE_DESC constantBufferDesc = {};
-    constantBufferDesc.Width = sizeof(ConstantBufferPayload);
-    constantBufferDesc.Height = 1;
-    constantBufferDesc.DepthOrArraySize = 1;
-    constantBufferDesc.MipLevels = 1;
-    constantBufferDesc.Format = DXGI_FORMAT_UNKNOWN;
-    constantBufferDesc.SampleDesc.Count = 1;
-    constantBufferDesc.SampleDesc.Quality = 0;
-    constantBufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    constantBufferDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-    constantBufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    for (UINT i = 0; i < backBufferCount; i++)
+    {
+        D3D12_RESOURCE_DESC constantBufferDesc = {};
+        constantBufferDesc.Width = sizeof(ConstantBufferPayload);
+        constantBufferDesc.Height = 1;
+        constantBufferDesc.DepthOrArraySize = 1;
+        constantBufferDesc.MipLevels = 1;
+        constantBufferDesc.Format = DXGI_FORMAT_UNKNOWN;
+        constantBufferDesc.SampleDesc.Count = 1;
+        constantBufferDesc.SampleDesc.Quality = 0;
+        constantBufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        constantBufferDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+        constantBufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 
-    D3D12_HEAP_PROPERTIES heapProperties = {};
-    heapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
-    heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-    heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-    heapProperties.CreationNodeMask = 1;
-    heapProperties.VisibleNodeMask = 1;
+        D3D12_HEAP_PROPERTIES heapProperties = {};
+        heapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
+        heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+        heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+        heapProperties.CreationNodeMask = 1;
+        heapProperties.VisibleNodeMask = 1;
 
-    device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &constantBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&this->ConstantBuffer));
+        device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &constantBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&this->ConstantBuffers[i]));
+    }
 }

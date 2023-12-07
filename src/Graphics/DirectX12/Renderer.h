@@ -14,6 +14,7 @@
 #include "../../Scene/SceneGraph.h"
 #include "../../Scene/SceneNode.h"
 #include "Vertex.h"
+#include "FrameMetadata.h"
 
 namespace Graphics::DirectX12
 {
@@ -38,20 +39,13 @@ namespace Graphics::DirectX12
     };
 
     /**
-     * @brief The FrameMetadata struct
-     * @note Not a best way, as in real world scenario we would have multiple command lists per frame, and multiple frames in flight
-     */
-    struct FrameMetadata
-    {
-        UINT Frame;
-        ComPtr<ID3D12GraphicsCommandList> CommandList;
-    };
-
-    /**
      * @brief The Renderer::DirectX12::Renderer class
      */
     class Renderer : public Core::BaseObject
     {
+    public:
+        static const UINT SwapChainBufferCount = 2;
+
     private:
         Diagnostics::Logger *Logger = nullptr;
 
@@ -65,7 +59,6 @@ namespace Graphics::DirectX12
         UINT FrameBufferWidth = 0;
         UINT FrameBufferHeight = 0;
         UINT CurrentFrameBufferIndex = 0;
-        static const UINT SwapChainBufferCount = 2;
         DXGI_FORMAT FrameBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
         ComPtr<ID3D12Fence> FrameFence = nullptr;

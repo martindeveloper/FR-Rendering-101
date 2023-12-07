@@ -8,6 +8,7 @@
 #include "WindowProperties.h"
 #include "../Scene/SceneGraph.h"
 #include "../Graphics/DirectX12/Renderer.h"
+#include "../Graphics/DirectX12/ResourcesInitializationMetadata.h"
 
 namespace Core
 {

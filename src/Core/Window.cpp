@@ -23,12 +23,16 @@ void Window::OnCreate(HWND windowHandle)
     this->Renderer = new Graphics::DirectX12::Renderer();
     this->Renderer->Initialize(windowHandle, this->Properties->Size.Width, this->Properties->Size.Height);
 
+    Graphics::DirectX12::ResourcesInitializationMetadata resourcesInitializationMetadata;
+    resourcesInitializationMetadata.Device = this->Renderer->GetDevice();
+    resourcesInitializationMetadata.BackBufferCount = this->Renderer->SwapChainBufferCount;
+
     // Initialize scene graph resources
     if (this->SceneGraph != nullptr)
     {
         for (Scene::SceneNode *sceneNode : *this->SceneGraph)
         {
-            sceneNode->OnResourceCreate(this->Renderer->GetDevice());
+            sceneNode->OnResourceCreate(&resourcesInitializationMetadata);
         }
     }
 }
@@ -47,7 +51,7 @@ void Window::OnPaint()
         for (Scene::SceneNode *sceneNode : *this->SceneGraph)
         {
             sceneNode->OnUpdate(frameMetaData->Frame);
-            sceneNode->OnRender(frameMetaData->CommandList);
+            sceneNode->OnRender(frameMetaData);
         }
     }
 
@@ -61,6 +65,13 @@ void Window::OnSetCursor()
 
 void Window::OnSizeChange(UINT width, UINT height)
 {
+    static bool firstTime = false;
+    if (!firstTime)
+    {
+        firstTime = true;
+        return;
+    }
+
     this->Properties->Size.Width = width;
     this->Properties->Size.Height = height;
 

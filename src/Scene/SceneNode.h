@@ -48,35 +48,35 @@ namespace Scene
 
         /**
          * Render the scene node.
-         * @param commandList The command list to use for rendering.
+         * @param frameMetadata The frame metadata.
          */
-        void OnRender(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList)
+        void OnRender(Graphics::DirectX12::FrameMetadata *frameMetadata)
         {
             if (this->Entity)
             {
-                this->Entity->OnRender(commandList);
+                this->Entity->OnRender(frameMetadata);
             }
 
             for (Scene::SceneNode *child : this->Children)
             {
-                child->OnRender(commandList);
+                child->OnRender(frameMetadata);
             }
         }
 
         /**
          * Create the resource for the scene node.
-         * @param device The device to use for resource creation.
+         * @param resourceMetadata The resource metadata.
          */
-        void OnResourceCreate(Microsoft::WRL::ComPtr<ID3D12Device> device)
+        void OnResourceCreate(Graphics::DirectX12::ResourcesInitializationMetadata *resourceMetadata)
         {
             if (this->Entity)
             {
-                this->Entity->OnResourceCreate(device);
+                this->Entity->OnResourceCreate(resourceMetadata);
             }
 
             for (Scene::SceneNode *child : this->Children)
             {
-                child->OnResourceCreate(device);
+                child->OnResourceCreate(resourceMetadata);
             }
         }
 

@@ -208,6 +208,7 @@ FrameMetadata *Renderer::BeginFrame()
     // Set command list and frame counter
     currentFrameMetaData->CommandList = commandList;
     currentFrameMetaData->Frame = this->FrameCounter;
+    currentFrameMetaData->CurrentBackBufferIndex = this->CurrentFrameBufferIndex;
 
     return currentFrameMetaData;
 }
