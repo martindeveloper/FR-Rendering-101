@@ -95,8 +95,11 @@ LRESULT Application::HandleWindowMessage(HWND windowHandle, UINT messageId, WPAR
             return 1;
         }
 
-        UINT width = LOWORD(lParam);
-        UINT height = HIWORD(lParam);
+        RECT clientRect = {};
+        GetClientRect(windowHandle, &clientRect);
+
+        UINT width = clientRect.right - clientRect.left;
+        UINT height = clientRect.bottom - clientRect.top;
 
         this->Window->OnSizeChange(width, height);
 

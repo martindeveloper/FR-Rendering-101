@@ -39,6 +39,15 @@ namespace Graphics::DirectX12
     };
 
     /**
+     * @brief The GpuFenceWaitReason enum
+     */
+    enum class GpuFenceWaitReason
+    {
+        None,
+        RenderBuffersSizeChange
+    };
+
+    /**
      * @brief The Renderer::DirectX12::Renderer class
      */
     class Renderer : public Core::BaseObject
@@ -124,6 +133,7 @@ namespace Graphics::DirectX12
         void FindSuitableHardwareAdapter();
         void CreateCommandInterfaces();
         void CreateSwapChain();
+        void CreateRenderTargetHeap();
         void CreateRenderTargetViews();
         void CleanupRenderTargetViews();
         ComPtr<ID3D12GraphicsCommandList> CreateCommandList();
@@ -133,8 +143,8 @@ namespace Graphics::DirectX12
         void CreateFrameFence();
 
         // Utility functions
-        void WaitForGPU() noexcept;
-        void WaitBeforeNextFrame();
+        void WaitForGPU(GpuFenceWaitReason reason = GpuFenceWaitReason::None) noexcept;
+        void WaitBeforeNextFrame() noexcept;
 
         GPUPerformanceClass TryToDeterminePerformanceClass(DXGI_ADAPTER_DESC1 *adapterDescription);
 

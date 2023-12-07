@@ -35,6 +35,8 @@ void Renderer::Initialize(HWND windowHandle, UINT width, UINT height)
     this->CreateDevice();
     this->CreateCommandInterfaces();
     this->CreateSwapChain();
+
+    this->CreateRenderTargetHeap();
     this->CreateRenderTargetViews();
 
     this->CreateFrameFence();
@@ -89,51 +91,37 @@ void Renderer::CreateFrameFence()
     this->FrameFenceEvent = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
 }
 
-void Renderer::WaitBeforeNextFrame()
+void Renderer::WaitBeforeNextFrame() noexcept
 {
-    if (!this->CommandQueue || !this->FrameFence)
-    {
-        this->Logger->Fatal("Renderer::WaitBeforeNextFrame: CommandQueue or FrameFence is null");
-        return;
-    }
+    // As we are using double buffering we must make sure the previous frame is done as we will reuse the RTVs and other
+    // This is called after Present() and before BeginFrame()
+    // So we started frame #2 and we are waiting for frame #1 to finish
+    // We cant start frame #3 until frame #1 is done, due shared resources
 
-    const UINT64 currentFenceValue = ++this->FrameFenceValues[this->CurrentFrameBufferIndex];
-    HRESULT hr = this->CommandQueue->Signal(this->FrameFence.Get(), currentFenceValue);
+    const UINT64 currentFenceValue = this->FrameFenceValues[this->CurrentFrameBufferIndex];
 
-    if (FAILED(hr))
-    {
-        this->Logger->Fatal("Renderer::WaitBeforeNextFrame: Failed to signal command queue");
-        return;
-    }
-
+    this->CommandQueue->Signal(this->FrameFence.Get(), currentFenceValue);
     this->CurrentFrameBufferIndex = this->SwapChain->GetCurrentBackBufferIndex();
 
     if (this->FrameFence->GetCompletedValue() < this->FrameFenceValues[this->CurrentFrameBufferIndex])
     {
         this->FrameFence->SetEventOnCompletion(this->FrameFenceValues[this->CurrentFrameBufferIndex], this->FrameFenceEvent);
-        WaitForSingleObjectEx(this->FrameFenceEvent, INFINITE, FALSE);
+        WaitForSingleObjectEx(this->FrameFenceEvent, INFINITE, false);
     }
+
+    this->FrameFenceValues[this->CurrentFrameBufferIndex] = currentFenceValue + 1;
 }
 
-void Renderer::WaitForGPU() noexcept
+void Renderer::WaitForGPU(GpuFenceWaitReason reason) noexcept
 {
-    // Wait for previous frame to finish rendering is not best practice but it's fine for our purposes
-
-    if (!this->CommandQueue || !this->FrameFence)
-    {
-        this->Logger->Fatal("Renderer::WaitForGPU: CommandQueue or FrameFence is null");
-        return;
-    }
+    // Wait for current frame to finish
+    // For example we started frame #2 which waits for #1 to finish
+    // Means frame #1 is done at this moment, but frame #2 is not
+    // This function waits for frame #2 to finish
+    // After this no GPU work should be in flight
 
     const UINT64 currentFenceValue = this->FrameFenceValues[this->CurrentFrameBufferIndex];
-    HRESULT hr = this->CommandQueue->Signal(this->FrameFence.Get(), currentFenceValue);
-
-    if (FAILED(hr))
-    {
-        this->Logger->Fatal("Renderer::WaitForGPU: Failed to signal command queue");
-        return;
-    }
-
+    this->CommandQueue->Signal(this->FrameFence.Get(), currentFenceValue);
     this->FrameFence->SetEventOnCompletion(currentFenceValue, this->FrameFenceEvent);
 
     WaitForSingleObjectEx(this->FrameFenceEvent, INFINITE, false);
@@ -259,12 +247,10 @@ void Renderer::Resize(UINT width, UINT height)
         return;
     }
 
-    this->Logger->Message("Renderer::Resize: Resizing to %dx%d", width, height);
-
     this->ShouldRender = false;
 
     // We must wait for both swap chain buffers to be released before resizing
-    this->WaitForGPU();
+    this->WaitForGPU(GpuFenceWaitReason::RenderBuffersSizeChange);
 
     this->FrameBufferWidth = width;
     this->FrameBufferHeight = height;
@@ -276,6 +262,8 @@ void Renderer::Resize(UINT width, UINT height)
 
     // Create new render target views with new buffer size
     this->CreateRenderTargetViews();
+
+    this->CurrentFrameBufferIndex = this->SwapChain->GetCurrentBackBufferIndex();
 
     this->ShouldRender = true;
 }
@@ -468,11 +456,11 @@ void Renderer::CleanupRenderTargetViews()
     for (UINT i = 0; i < this->SwapChainBufferCount; i++)
     {
         this->RenderTargets[i].Reset();
-        this->FrameFenceValues[i] = 1;
+        this->FrameFenceValues[i] = this->FrameFenceValues[this->CurrentFrameBufferIndex];
     }
 }
 
-void Renderer::CreateRenderTargetViews()
+void Renderer::CreateRenderTargetHeap()
 {
     if (this->Device == nullptr || this->SwapChain == nullptr)
     {
@@ -488,6 +476,17 @@ void Renderer::CreateRenderTargetViews()
     HRESULT result = this->Device->CreateDescriptorHeap(&rtvHeapDescription, IID_PPV_ARGS(&this->RTVHeap));
 
     Platform::CheckHandle(result, "Failed to create descriptor heap");
+}
+
+void Renderer::CreateRenderTargetViews()
+{
+    if (this->Device == nullptr || this->SwapChain == nullptr || this->RTVHeap == nullptr)
+    {
+        this->Logger->Fatal("Renderer::CreateRenderTargetView: Device, swap chain or RTV heap is null");
+        return;
+    }
+
+    HRESULT result;
 
     UINT rtvDescriptorSize = this->Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = this->RTVHeap->GetCPUDescriptorHandleForHeapStart();
