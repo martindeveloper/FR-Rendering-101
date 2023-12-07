@@ -65,13 +65,6 @@ void Window::OnSetCursor()
 
 void Window::OnSizeChange(UINT width, UINT height)
 {
-    static bool firstTime = false;
-    if (!firstTime)
-    {
-        firstTime = true;
-        return;
-    }
-
     this->Properties->Size.Width = width;
     this->Properties->Size.Height = height;
 
