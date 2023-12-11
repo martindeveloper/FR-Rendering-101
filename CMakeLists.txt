@@ -33,6 +33,7 @@ target_compile_definitions(${PROJECT_NAME}
     WINDOWS_ALLOCATOR_DEBUG_VERBOSE=1
     WINDOWS_ALLOCATOR_DEBUG_STATS=1
     ALLOCATOR_GLOBAL_OVERRIDE=0
+    WINDOWS_COM_ENABLED=1
 )
 
 if (MSVC)
@@ -62,5 +63,6 @@ if (MSVC)
         gdi32.lib
         d3d12.lib
         dxgi.lib
+        dxguid.lib
     )
 endif()

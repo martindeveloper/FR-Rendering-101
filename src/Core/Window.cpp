@@ -39,6 +39,8 @@ void Window::OnCreate(HWND windowHandle)
 
 void Window::OnQuit()
 {
+    this->Renderer->Shutdown();
+
     PostQuitMessage(0);
 }
 

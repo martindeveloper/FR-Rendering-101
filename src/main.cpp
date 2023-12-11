@@ -9,6 +9,11 @@
  */
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPSTR pCmdLine, _In_ int nCmdShow)
 {
+#ifdef WINDOWS_COM_ENABLED
+    // Initialize COM
+    CoInitialize(nullptr);
+#endif
+
     // Entry point payload
     Platform::Windows::EntrypointPayload entrypointPayload{hInstance, NULL, pCmdLine, nCmdShow};
 
@@ -32,6 +37,11 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPSTR pCmd
 
     // Delete scene graph
     delete sceneGraph;
+
+#ifdef WINDOWS_COM_ENABLED
+    // Uninitialize COM
+    CoUninitialize();
+#endif
 
     return 0;
 }

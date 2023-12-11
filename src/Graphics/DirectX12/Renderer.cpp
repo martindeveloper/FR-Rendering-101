@@ -13,12 +13,29 @@ Renderer::Renderer()
 Renderer::~Renderer()
 {
     // No extra need to manually release resources because of ComPtr
-
-    this->WaitForGPU();
-
     CloseHandle(this->FrameFenceEvent);
 
     this->UnloadDiagnosticsModules();
+
+#ifdef BUILD_TYPE_DEBUG
+    this->DebugInterface.Reset();
+    this->DebugDevice.Reset();
+#endif
+}
+
+void Renderer::Shutdown()
+{
+    this->ShouldRender = false;
+
+    this->WaitForGPU();
+
+    this->CleanupRenderTargetViews();
+
+    this->Logger->Message("Renderer::Shutdown: Renderer shutdown");
+
+#ifdef BUILD_TYPE_DEBUG
+    this->DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_SUMMARY | D3D12_RLDO_DETAIL);
+#endif
 }
 
 void Renderer::Initialize(HWND windowHandle, UINT width, UINT height)
@@ -116,9 +133,14 @@ void Renderer::WaitForGPU(GpuFenceWaitReason reason) noexcept
     // This function waits for frame #2 to finish
     // After this no GPU work should be in flight
 
+    HRESULT result;
     const UINT64 currentFenceValue = this->FrameFenceValues[this->CurrentFrameBufferIndex];
-    this->CommandQueue->Signal(this->FrameFence.Get(), currentFenceValue);
-    this->FrameFence->SetEventOnCompletion(currentFenceValue, this->FrameFenceEvent);
+
+    result = this->CommandQueue->Signal(this->FrameFence.Get(), currentFenceValue);
+    Platform::CheckHandle(result, "Failed to signal frame fence");
+
+    result = this->FrameFence->SetEventOnCompletion(currentFenceValue, this->FrameFenceEvent);
+    Platform::CheckHandle(result, "Failed to set event on frame fence");
 
     WaitForSingleObjectEx(this->FrameFenceEvent, INFINITE, false);
 
@@ -243,6 +265,8 @@ void Renderer::Resize(UINT width, UINT height)
         return;
     }
 
+    this->Logger->Message("Renderer::Resize: Resizing to %ux%u", width, height);
+
     this->ShouldRender = false;
 
     // We must wait for both swap chain buffers to be released before resizing
@@ -254,7 +278,10 @@ void Renderer::Resize(UINT width, UINT height)
     // Remove old render target views
     this->CleanupRenderTargetViews();
 
-    this->SwapChain->ResizeBuffers(this->SwapChainBufferCount, width, height, this->FrameBufferFormat, 0);
+    // TODO: The PIX handle warning appears here
+    HRESULT buffersResizeResult = this->SwapChain->ResizeBuffers(this->SwapChainBufferCount, width, height, this->FrameBufferFormat, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
+
+    Platform::CheckHandle(buffersResizeResult, "Failed to resize swap chain buffers", true);
 
     // Create new render target views with new buffer size
     this->CreateRenderTargetViews();
@@ -288,6 +315,16 @@ void Renderer::CreateDevice()
     Platform::CheckHandle(result, "Failed to create device", true);
 
     this->Device = device;
+
+#ifdef BUILD_TYPE_DEBUG
+    if (this->Device != nullptr)
+    {
+        result = this->Device.As(&this->DebugDevice);
+        Platform::CheckHandle(result, "Failed to cast device to debug device", true);
+
+        this->DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_SUMMARY | D3D12_RLDO_DETAIL);
+    }
+#endif
 }
 
 void Renderer::FindSuitableHardwareAdapter()
@@ -415,6 +452,9 @@ void Renderer::CreateSwapChain()
     swapChainDescription.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDescription.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
 
+    DXGI_SWAP_CHAIN_FULLSCREEN_DESC swapChainFullScreenDescription = {0};
+    swapChainFullScreenDescription.Windowed = TRUE;
+
     ComPtr<IDXGISwapChain1> swapChain = nullptr;
 
     ComPtr<IDXGIFactory7> dxgiFactory7 = nullptr;
@@ -422,7 +462,7 @@ void Renderer::CreateSwapChain()
     result = this->DXGIFactory.As(&dxgiFactory7);
     Platform::CheckHandle(result, "Failed to cast DXGI factory to DXGI factory 7");
 
-    result = dxgiFactory7->CreateSwapChainForHwnd(this->CommandQueue.Get(), this->WindowHandle, &swapChainDescription, nullptr, nullptr, &swapChain);
+    result = dxgiFactory7->CreateSwapChainForHwnd(this->CommandQueue.Get(), this->WindowHandle, &swapChainDescription, &swapChainFullScreenDescription, nullptr, &swapChain);
     Platform::CheckHandle(result, "Failed to create swap chain");
 
     if (FAILED(swapChain.As(&this->SwapChain)))
@@ -471,6 +511,8 @@ void Renderer::CreateRenderTargetViews()
         return;
     }
 
+    this->Logger->Message("Renderer::CreateRenderTargetView: Creating %u render target views", this->SwapChainBufferCount);
+
     HRESULT result;
 
     UINT rtvDescriptorSize = this->Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -489,7 +531,7 @@ void Renderer::CreateRenderTargetViews()
 
         // Set name with index for debugging
         wchar_t name[25] = {};
-        swprintf_s(name, L"SwapChainBuffer %u", i);
+        swprintf_s(name, L"RTV %u", i);
         this->RenderTargets[i]->SetName(name);
 
         rtvHandle.ptr += rtvDescriptorSize;

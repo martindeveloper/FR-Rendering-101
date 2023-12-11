@@ -228,27 +228,27 @@ void TriangleEntity::CreateVertexBuffer(Microsoft::WRL::ComPtr<ID3D12Device> dev
 
 void TriangleEntity::CreateConstantBuffers(Microsoft::WRL::ComPtr<ID3D12Device> device, UINT backBufferCount)
 {
+    D3D12_RESOURCE_DESC constantBufferDesc = {};
+    constantBufferDesc.Width = sizeof(ConstantBufferPayload);
+    constantBufferDesc.Height = 1;
+    constantBufferDesc.DepthOrArraySize = 1;
+    constantBufferDesc.MipLevels = 1;
+    constantBufferDesc.Format = DXGI_FORMAT_UNKNOWN;
+    constantBufferDesc.SampleDesc.Count = 1;
+    constantBufferDesc.SampleDesc.Quality = 0;
+    constantBufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    constantBufferDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+    constantBufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+
+    D3D12_HEAP_PROPERTIES heapProperties = {};
+    heapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
+    heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+    heapProperties.CreationNodeMask = 1;
+    heapProperties.VisibleNodeMask = 1;
+
     for (UINT i = 0; i < backBufferCount; i++)
     {
-        D3D12_RESOURCE_DESC constantBufferDesc = {};
-        constantBufferDesc.Width = sizeof(ConstantBufferPayload);
-        constantBufferDesc.Height = 1;
-        constantBufferDesc.DepthOrArraySize = 1;
-        constantBufferDesc.MipLevels = 1;
-        constantBufferDesc.Format = DXGI_FORMAT_UNKNOWN;
-        constantBufferDesc.SampleDesc.Count = 1;
-        constantBufferDesc.SampleDesc.Quality = 0;
-        constantBufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        constantBufferDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-        constantBufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-
-        D3D12_HEAP_PROPERTIES heapProperties = {};
-        heapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
-        heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-        heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-        heapProperties.CreationNodeMask = 1;
-        heapProperties.VisibleNodeMask = 1;
-
         device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &constantBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&this->ConstantBuffers[i]));
     }
 }

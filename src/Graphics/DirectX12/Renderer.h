@@ -81,7 +81,10 @@ namespace Graphics::DirectX12
         // DX12 interfaces
         ComPtr<IDXGIFactory> DXGIFactory = nullptr;
         ComPtr<ID3D12Device> Device = nullptr;
+#ifdef BUILD_TYPE_DEBUG
         ComPtr<ID3D12Debug> DebugInterface = nullptr;
+        ComPtr<ID3D12DebugDevice> DebugDevice = nullptr;
+#endif
         ComPtr<IDXGIAdapter> Adapter = nullptr;
         ComPtr<IDXGISwapChain3> SwapChain = nullptr;
         ComPtr<ID3D12CommandQueue> CommandQueue = nullptr;
@@ -104,6 +107,11 @@ namespace Graphics::DirectX12
          * @param height
          */
         void Initialize(HWND windowHandle, UINT width, UINT height);
+
+        /**
+         * @brief Shutdown renderer
+         */
+        void Shutdown();
 
         /**
          * @brief Begin a frame
