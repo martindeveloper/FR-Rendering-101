@@ -12,7 +12,7 @@ struct PixelInput
 float4 main(PixelInput input) : SV_TARGET
 {
     float scaledTime = time * 0.5;
-    float pulse = (sin(scaledTime) + 1.0) * 0.5;
+    float pulse = (sin(scaledTime) + 1.0) * 5;
 
     return input.color * pulse;
 }

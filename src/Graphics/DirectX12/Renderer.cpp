@@ -375,12 +375,8 @@ void Renderer::CreateDevice()
 void Renderer::FindSuitableHardwareAdapter()
 {
     ComPtr<IDXGIAdapter1> currentAdapter = nullptr;
-    ComPtr<IDXGIFactory7> dxgiFactory7 = nullptr;
-    HRESULT castResult = this->DXGIFactory.As(&dxgiFactory7);
 
-    Platform::CheckHandle(castResult, "Failed to cast DXGI factory to DXGI factory 7", true);
-
-    for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != dxgiFactory7->EnumAdapters1(adapterIndex, &currentAdapter); ++adapterIndex)
+    for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != this->DXGIFactory->EnumAdapters1(adapterIndex, &currentAdapter); ++adapterIndex)
     {
         DXGI_ADAPTER_DESC1 adapterDescription;
         currentAdapter->GetDesc1(&adapterDescription);
