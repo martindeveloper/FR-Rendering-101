@@ -70,13 +70,14 @@ namespace Graphics::DirectX12
         UINT CurrentFrameBufferIndex = 0;
         DXGI_FORMAT FrameBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-        ComPtr<ID3D12Fence> FrameFence = nullptr;
         UINT64 FrameFenceValues[Renderer::SwapChainBufferCount] = {1, 1};
         HANDLE FrameFenceEvent = nullptr;
 
         UINT FrameCounter = 0;
         FLOAT FrameClearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
         bool IsFrameInFlight = false;
+
+        UINT CommandListCounter = 0;
 
         // DX12 interfaces
         ComPtr<IDXGIFactory7> DXGIFactory = nullptr;
@@ -90,6 +91,7 @@ namespace Graphics::DirectX12
         ComPtr<ID3D12CommandQueue> CommandQueue = nullptr;
         ComPtr<ID3D12CommandAllocator> CommandAllocators[Renderer::SwapChainBufferCount] = {nullptr, nullptr};
         ComPtr<ID3D12DescriptorHeap> RTVHeap = nullptr;
+        ComPtr<ID3D12Fence> FrameFence = nullptr;
 
         ComPtr<ID3D12Resource> RenderTargets[Renderer::SwapChainBufferCount] = {nullptr, nullptr};
 
@@ -130,6 +132,11 @@ namespace Graphics::DirectX12
          * @param minimized
          */
         void Resize(UINT width, UINT height, BOOL minimized = FALSE);
+
+        /**
+         * @brief Create resources which are dependent on window size
+         */
+        void CreateWindowSizeDependentResources();
 
         /**
          * @brief Get device

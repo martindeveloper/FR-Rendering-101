@@ -42,7 +42,7 @@ foreach(SHADER_HLSL_FILE ${HLSL_SOURCE_FILES})
         message(FATAL_ERROR "[Shaders] Unknown shader type for ${SHADER_FILE_NAME}")
     endif()
 
-    set(DXC_ARGS -T ${SHADER_TYPE}_${SHADER_MODEL} -E ${SHADER_ENTRYPOINT} ${DXC_DEBUG_ARGS} -Fo ${SHADER_DXIL_FILE} ${SHADER_HLSL_FILE})
+    set(DXC_ARGS -T ${SHADER_TYPE}_${SHADER_MODEL} -all-resources-bound -E ${SHADER_ENTRYPOINT} ${DXC_DEBUG_ARGS} -Fo ${SHADER_DXIL_FILE} ${SHADER_HLSL_FILE})
 
     # Add custom command to compile HLSL to DXIL as a post-build step
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

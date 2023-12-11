@@ -19,15 +19,15 @@ void TriangleEntity::OnShutdown()
     delete this->VertexShaderBlob;
     delete this->PixelShaderBlob;
 
-    //
+    // Reset all COM objects
     this->RootSignature.Reset();
-    this->RootSignature = nullptr;
-
     this->PipelineState.Reset();
-    this->PipelineState = nullptr;
-
     this->VertexBuffer.Reset();
-    this->VertexBuffer = nullptr;
+
+    for (UINT i = 0; i < 2; i++)
+    {
+        this->ConstantBuffers[i].Reset();
+    }
 }
 
 void TriangleEntity::OnResourceCreate(Graphics::DirectX12::ResourcesInitializationMetadata *resourceMetadata)
@@ -105,6 +105,10 @@ void TriangleEntity::CreateRootSignature(Microsoft::WRL::ComPtr<ID3D12Device> de
 
     result = device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&this->RootSignature));
     Platform::CheckHandle(result, "Failed to create root signature");
+
+#ifdef BUILD_TYPE_DEBUG
+    this->RootSignature->SetName(L"Triangle Root Signature");
+#endif
 }
 
 void TriangleEntity::CreatePipelineState(Microsoft::WRL::ComPtr<ID3D12Device> device)
@@ -116,12 +120,6 @@ void TriangleEntity::CreatePipelineState(Microsoft::WRL::ComPtr<ID3D12Device> de
         };
 
     UINT inputElementCount = sizeof(inputElement) / sizeof(D3D12_INPUT_ELEMENT_DESC);
-
-    D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineStateDescription = {};
-    pipelineStateDescription.InputLayout = {inputElement, inputElementCount};
-    pipelineStateDescription.pRootSignature = this->RootSignature.Get();
-    pipelineStateDescription.VS = {reinterpret_cast<BYTE *>(this->VertexShaderBlob->GetBufferPointer()), this->VertexShaderBlob->GetBufferSize()};
-    pipelineStateDescription.PS = {reinterpret_cast<BYTE *>(this->PixelShaderBlob->GetBufferPointer()), this->PixelShaderBlob->GetBufferSize()};
 
     D3D12_RASTERIZER_DESC rasterizerDescription = {};
     rasterizerDescription.FillMode = D3D12_FILL_MODE_SOLID;
@@ -166,17 +164,26 @@ void TriangleEntity::CreatePipelineState(Microsoft::WRL::ComPtr<ID3D12Device> de
     depthStencilDescription.BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
     depthStencilDescription.BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
 
-    pipelineStateDescription.RasterizerState = rasterizerDescription;
-    pipelineStateDescription.BlendState = blendDescription;
-    pipelineStateDescription.DepthStencilState = depthStencilDescription;
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineStateDescription = {};
+    pipelineStateDescription.InputLayout = {inputElement, inputElementCount};
+    pipelineStateDescription.pRootSignature = this->RootSignature.Get();
+    pipelineStateDescription.VS = {reinterpret_cast<BYTE *>(this->VertexShaderBlob->GetBufferPointer()), this->VertexShaderBlob->GetBufferSize()};
+    pipelineStateDescription.PS = {reinterpret_cast<BYTE *>(this->PixelShaderBlob->GetBufferPointer()), this->PixelShaderBlob->GetBufferSize()};
     pipelineStateDescription.SampleMask = UINT_MAX;
     pipelineStateDescription.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     pipelineStateDescription.NumRenderTargets = 1;
     pipelineStateDescription.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
     pipelineStateDescription.SampleDesc.Count = 1;
+    pipelineStateDescription.RasterizerState = rasterizerDescription;
+    pipelineStateDescription.BlendState = blendDescription;
+    pipelineStateDescription.DepthStencilState = depthStencilDescription;
 
     HRESULT result = device->CreateGraphicsPipelineState(&pipelineStateDescription, IID_PPV_ARGS(&this->PipelineState));
     Platform::CheckHandle(result, "Failed to create pipeline state");
+
+#ifdef BUILD_TYPE_DEBUG
+    this->PipelineState->SetName(L"Triangle Pipeline State");
+#endif
 }
 
 void TriangleEntity::CreateShaders()

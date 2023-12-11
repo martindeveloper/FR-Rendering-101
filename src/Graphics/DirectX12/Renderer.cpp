@@ -47,9 +47,9 @@ void Renderer::Shutdown()
     this->CommandQueue.Reset();
 
 #ifdef BUILD_TYPE_DEBUG
-    this->DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_SUMMARY | D3D12_RLDO_DETAIL);
-
     this->DebugInterface.Reset();
+
+    this->DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_SUMMARY | D3D12_RLDO_DETAIL);
     this->DebugDevice.Reset();
 #endif
 }
@@ -112,12 +112,21 @@ void Renderer::UnloadDiagnosticsModules()
 void Renderer::CreateFrameFence()
 {
     // Create frame fence
-    HRESULT result = this->Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&this->FrameFence));
-
+    HRESULT result = this->Device->CreateFence(this->FrameFenceValues[this->CurrentFrameBufferIndex], D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&this->FrameFence));
     Platform::CheckHandle(result, "Failed to create frame fence", true);
+
+#ifdef BUILD_TYPE_DEBUG
+    this->FrameFence->SetName(L"Frame Fence");
+#endif
 
     // Create frame fence event
     this->FrameFenceEvent = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
+
+    if (this->FrameFenceEvent == INVALID_HANDLE_VALUE)
+    {
+        this->Logger->Fatal("Renderer::CreateFrameFence: Failed to create frame fence event");
+        return;
+    }
 }
 
 void Renderer::WaitBeforeNextFrame() noexcept
@@ -271,7 +280,31 @@ void Renderer::EndFrame(FrameMetadata *frameMetaData)
 
     this->IsFrameInFlight = false;
 
+    // Reset command list
+    commandList.Reset();
+
+    // Delete frame metadata
     delete frameMetaData;
+}
+
+void Renderer::CreateWindowSizeDependentResources()
+{
+    if (!this->WindowHandle)
+    {
+        this->Logger->Fatal("Renderer::CreateWindowSizeDependentResources: Window handle is null");
+        return;
+    }
+
+    this->ShouldRender = false;
+    this->WaitForGPU(GpuFenceWaitReason::RenderBuffersSizeChange);
+
+    // Remove old render target views
+    this->CleanupRenderTargetViews();
+
+    if (this->SwapChain)
+    {
+        HRESULT result = this->SwapChain->ResizeBuffers(this->SwapChainBufferCount, this->FrameBufferWidth, this->FrameBufferHeight, this->FrameBufferFormat, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
+    }
 }
 
 void Renderer::Resize(UINT width, UINT height, BOOL minimized)
@@ -309,16 +342,24 @@ void Renderer::Resize(UINT width, UINT height, BOOL minimized)
     // Remove old render target views
     this->CleanupRenderTargetViews();
 
-    // TODO: The PIX handle warning appears here
-    HRESULT buffersResizeResult = this->SwapChain->ResizeBuffers(this->SwapChainBufferCount, width, height, this->FrameBufferFormat, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
+    // Resize swap chain buffers
+    DXGI_SWAP_CHAIN_DESC1 swapChainDescription = {};
+    this->SwapChain->GetDesc1(&swapChainDescription);
 
+#ifdef BUILD_TYPE_DEBUG
+    this->DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_SUMMARY | D3D12_RLDO_DETAIL);
+#endif
+
+    HRESULT buffersResizeResult = this->SwapChain->ResizeBuffers(this->SwapChainBufferCount, width, height, this->FrameBufferFormat, swapChainDescription.Flags);
     Platform::CheckHandle(buffersResizeResult, "Failed to resize swap chain buffers", true);
 
-    // Create new render target views with new buffer size
-    this->CreateRenderTargetViews();
-
+    // Update current frame buffer index, MUST be done before creating new render target views
     this->CurrentFrameBufferIndex = this->SwapChain->GetCurrentBackBufferIndex();
 
+    // Recreate render target views
+    this->CreateRenderTargetViews();
+
+    // Enable rendering again
     this->ShouldRender = true;
 }
 
@@ -340,6 +381,8 @@ void Renderer::CreateDevice()
     Platform::CheckHandle(result, "Failed to create device", true);
 
 #ifdef BUILD_TYPE_DEBUG
+    this->Device->SetName(L"Dx12 Main Device");
+
     result = this->Device.As(&this->DebugDevice);
     Platform::CheckHandle(result, "Failed to cast device to debug device", true);
 #endif
@@ -448,6 +491,13 @@ ComPtr<ID3D12GraphicsCommandList> Renderer::CreateCommandList()
     // Close by default
     commandList->Close();
 
+#ifdef BUILD_TYPE_DEBUG
+    wchar_t name[25] = {};
+    swprintf_s(name, L"Command List %d", this->CommandListCounter);
+    commandList->SetName(name);
+#endif
+
+    this->CommandListCounter++;
     return commandList;
 }
 
@@ -533,10 +583,12 @@ void Renderer::CreateRenderTargetViews()
     HRESULT result;
 
     UINT rtvDescriptorSize = this->Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = this->RTVHeap->GetCPUDescriptorHandleForHeapStart();
 
     for (UINT i = 0; i < this->SwapChainBufferCount; i++)
     {
+        D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = this->RTVHeap->GetCPUDescriptorHandleForHeapStart();
+        rtvHandle.ptr += i * rtvDescriptorSize;
+
         result = this->SwapChain->GetBuffer(i, IID_PPV_ARGS(&this->RenderTargets[i]));
         Platform::CheckHandle(result, "Failed to get swap chain buffer");
 
@@ -551,8 +603,6 @@ void Renderer::CreateRenderTargetViews()
         swprintf_s(name, L"RTV %u", i);
         this->RenderTargets[i]->SetName(name);
 #endif
-
-        rtvHandle.ptr += rtvDescriptorSize;
     }
 }
 
