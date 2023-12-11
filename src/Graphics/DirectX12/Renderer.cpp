@@ -81,11 +81,7 @@ void Renderer::CreateFrameFence()
     // Create frame fence
     HRESULT result = this->Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&this->FrameFence));
 
-    if (FAILED(result))
-    {
-        this->Logger->Fatal("Renderer::CreateFrameFence: Failed to create frame fence");
-        return;
-    }
+    Platform::CheckHandle(result, "Failed to create frame fence", true);
 
     // Create frame fence event
     this->FrameFenceEvent = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
@@ -280,11 +276,7 @@ void Renderer::CreateDevice()
     IDXGIFactory7 *dxgiFactory = nullptr;
     HRESULT result = CreateDXGIFactory2(0, IID_PPV_ARGS(&dxgiFactory));
 
-    if (FAILED(result))
-    {
-        this->Logger->Fatal("DirectX12Renderer: Failed to create DXGI factory");
-        return;
-    }
+    Platform::CheckHandle(result, "Failed to create DXGI factory", true);
 
     this->DXGIFactory = dxgiFactory;
 
@@ -293,11 +285,7 @@ void Renderer::CreateDevice()
     ID3D12Device9 *device = nullptr;
     result = D3D12CreateDevice(this->Adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&device));
 
-    if (FAILED(result))
-    {
-        this->Logger->Fatal("DirectX12Renderer: Failed to create device");
-        return;
-    }
+    Platform::CheckHandle(result, "Failed to create device", true);
 
     this->Device = device;
 }
@@ -306,12 +294,9 @@ void Renderer::FindSuitableHardwareAdapter()
 {
     ComPtr<IDXGIAdapter1> currentAdapter = nullptr;
     ComPtr<IDXGIFactory7> dxgiFactory7 = nullptr;
+    HRESULT castResult = this->DXGIFactory.As(&dxgiFactory7);
 
-    if (FAILED(this->DXGIFactory.As(&dxgiFactory7)))
-    {
-        this->Logger->Fatal("Renderer::FindSuitableHardwareAdapter: Failed to cast DXGI factory to DXGI factory 7");
-        return;
-    }
+    Platform::CheckHandle(castResult, "Failed to cast DXGI factory to DXGI factory 7", true);
 
     for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != dxgiFactory7->EnumAdapters1(adapterIndex, &currentAdapter); ++adapterIndex)
     {
