@@ -79,8 +79,8 @@ namespace Graphics::DirectX12
         bool IsFrameInFlight = false;
 
         // DX12 interfaces
-        ComPtr<IDXGIFactory> DXGIFactory = nullptr;
-        ComPtr<ID3D12Device> Device = nullptr;
+        ComPtr<IDXGIFactory7> DXGIFactory = nullptr;
+        ComPtr<ID3D12Device9> Device = nullptr;
 #ifdef BUILD_TYPE_DEBUG
         ComPtr<ID3D12Debug> DebugInterface = nullptr;
         ComPtr<ID3D12DebugDevice> DebugDevice = nullptr;
@@ -135,7 +135,7 @@ namespace Graphics::DirectX12
          * @brief Get device
          * @return
          */
-        ComPtr<ID3D12Device> GetDevice() const { return this->Device; };
+        ComPtr<ID3D12Device9> GetDevice() const { return this->Device; };
 
     private:
         void CreateDevice();

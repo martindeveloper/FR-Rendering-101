@@ -25,6 +25,9 @@ void TriangleEntity::OnShutdown()
 
     this->PipelineState.Reset();
     this->PipelineState = nullptr;
+
+    this->VertexBuffer.Reset();
+    this->VertexBuffer = nullptr;
 }
 
 void TriangleEntity::OnResourceCreate(Graphics::DirectX12::ResourcesInitializationMetadata *resourceMetadata)

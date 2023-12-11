@@ -145,8 +145,14 @@ void Renderer::WaitForGPU(GpuFenceWaitReason reason) noexcept
     // This function waits for frame #2 to finish
     // After this no GPU work should be in flight
 
+    if (this->CommandQueue == nullptr || this->FrameFence == nullptr || this->FrameFenceEvent == nullptr || this->FrameFenceEvent == INVALID_HANDLE_VALUE)
+    {
+        this->Logger->Fatal("Renderer::WaitForGPU: Command queue, frame fence or frame fence event is null");
+        return;
+    }
+
     HRESULT result;
-    const UINT64 currentFenceValue = this->FrameFenceValues[this->CurrentFrameBufferIndex];
+    UINT64 currentFenceValue = this->FrameFenceValues[this->CurrentFrameBufferIndex];
 
     result = this->CommandQueue->Signal(this->FrameFence.Get(), currentFenceValue);
     Platform::CheckHandle(result, "Failed to signal frame fence");
@@ -321,30 +327,17 @@ void Renderer::CreateDevice()
     }
 #endif
 
-    IDXGIFactory7 *dxgiFactory = nullptr;
-    HRESULT result = CreateDXGIFactory2(0, IID_PPV_ARGS(&dxgiFactory));
-
+    HRESULT result = CreateDXGIFactory2(0, IID_PPV_ARGS(&this->DXGIFactory));
     Platform::CheckHandle(result, "Failed to create DXGI factory", true);
-
-    this->DXGIFactory = dxgiFactory;
 
     this->FindSuitableHardwareAdapter();
 
-    ID3D12Device9 *device = nullptr;
-    result = D3D12CreateDevice(this->Adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&device));
-
+    result = D3D12CreateDevice(this->Adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&this->Device));
     Platform::CheckHandle(result, "Failed to create device", true);
 
-    this->Device = device;
-
 #ifdef BUILD_TYPE_DEBUG
-    if (this->Device != nullptr)
-    {
-        result = this->Device.As(&this->DebugDevice);
-        Platform::CheckHandle(result, "Failed to cast device to debug device", true);
-
-        this->DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_SUMMARY | D3D12_RLDO_DETAIL);
-    }
+    result = this->Device.As(&this->DebugDevice);
+    Platform::CheckHandle(result, "Failed to cast device to debug device", true);
 #endif
 }
 
@@ -482,12 +475,7 @@ void Renderer::CreateSwapChain()
 
     ComPtr<IDXGISwapChain1> swapChain = nullptr;
 
-    ComPtr<IDXGIFactory7> dxgiFactory7 = nullptr;
-
-    result = this->DXGIFactory.As(&dxgiFactory7);
-    Platform::CheckHandle(result, "Failed to cast DXGI factory to DXGI factory 7");
-
-    result = dxgiFactory7->CreateSwapChainForHwnd(this->CommandQueue.Get(), this->WindowHandle, &swapChainDescription, &swapChainFullScreenDescription, nullptr, &swapChain);
+    result = this->DXGIFactory->CreateSwapChainForHwnd(this->CommandQueue.Get(), this->WindowHandle, &swapChainDescription, &swapChainFullScreenDescription, nullptr, &swapChain);
     Platform::CheckHandle(result, "Failed to create swap chain");
 
     if (FAILED(swapChain.As(&this->SwapChain)))
@@ -496,7 +484,7 @@ void Renderer::CreateSwapChain()
         return;
     }
 
-    dxgiFactory7->MakeWindowAssociation(this->WindowHandle, DXGI_MWA_NO_ALT_ENTER);
+    this->DXGIFactory->MakeWindowAssociation(this->WindowHandle, DXGI_MWA_NO_ALT_ENTER);
 
     this->CurrentFrameBufferIndex = this->SwapChain->GetCurrentBackBufferIndex();
 }
