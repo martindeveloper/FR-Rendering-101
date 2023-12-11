@@ -77,8 +77,6 @@ namespace Graphics::DirectX12
         FLOAT FrameClearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
         bool IsFrameInFlight = false;
 
-        UINT CommandListCounter = 0;
-
         // DX12 interfaces
         ComPtr<IDXGIFactory7> DXGIFactory = nullptr;
         ComPtr<ID3D12Device9> Device = nullptr;
@@ -87,11 +85,12 @@ namespace Graphics::DirectX12
         ComPtr<ID3D12DebugDevice> DebugDevice = nullptr;
 #endif
         ComPtr<IDXGIAdapter> Adapter = nullptr;
-        ComPtr<IDXGISwapChain3> SwapChain = nullptr;
+        ComPtr<IDXGISwapChain4> SwapChain = nullptr;
         ComPtr<ID3D12CommandQueue> CommandQueue = nullptr;
         ComPtr<ID3D12CommandAllocator> CommandAllocators[Renderer::SwapChainBufferCount] = {nullptr, nullptr};
         ComPtr<ID3D12DescriptorHeap> RTVHeap = nullptr;
         ComPtr<ID3D12Fence> FrameFence = nullptr;
+        ComPtr<ID3D12GraphicsCommandList> CommandLists[Renderer::SwapChainBufferCount] = {nullptr, nullptr};
 
         ComPtr<ID3D12Resource> RenderTargets[Renderer::SwapChainBufferCount] = {nullptr, nullptr};
 
@@ -134,11 +133,6 @@ namespace Graphics::DirectX12
         void Resize(UINT width, UINT height, BOOL minimized = FALSE);
 
         /**
-         * @brief Create resources which are dependent on window size
-         */
-        void CreateWindowSizeDependentResources();
-
-        /**
          * @brief Get device
          * @return
          */
@@ -152,7 +146,7 @@ namespace Graphics::DirectX12
         void CreateRenderTargetHeap();
         void CreateRenderTargetViews();
         void CleanupRenderTargetViews();
-        ComPtr<ID3D12GraphicsCommandList> CreateCommandList();
+        void CreateCommandLists();
         D3D12_RESOURCE_BARRIER CreateTransitionBarrier(ComPtr<ID3D12Resource> resource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after);
 
         // Frame

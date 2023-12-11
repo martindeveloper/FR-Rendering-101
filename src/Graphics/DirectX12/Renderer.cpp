@@ -40,6 +40,11 @@ void Renderer::Shutdown()
 
     for (UINT i = 0; i < this->SwapChainBufferCount; i++)
     {
+        this->CommandLists[i].Reset();
+    }
+
+    for (UINT i = 0; i < this->SwapChainBufferCount; i++)
+    {
         this->CommandAllocators[i].Reset();
     }
 
@@ -67,6 +72,8 @@ void Renderer::Initialize(HWND windowHandle, UINT width, UINT height)
 
     this->CreateDevice();
     this->CreateCommandInterfaces();
+    this->CreateCommandLists();
+
     this->CreateSwapChain();
 
     this->CreateRenderTargetHeap();
@@ -144,7 +151,7 @@ void Renderer::WaitBeforeNextFrame() noexcept
     if (this->FrameFence->GetCompletedValue() < this->FrameFenceValues[this->CurrentFrameBufferIndex])
     {
         this->FrameFence->SetEventOnCompletion(this->FrameFenceValues[this->CurrentFrameBufferIndex], this->FrameFenceEvent);
-        WaitForSingleObjectEx(this->FrameFenceEvent, INFINITE, false);
+        WaitForSingleObjectEx(this->FrameFenceEvent, INFINITE, FALSE);
     }
 
     this->FrameFenceValues[this->CurrentFrameBufferIndex] = currentFenceValue + 1;
@@ -173,7 +180,7 @@ void Renderer::WaitForGPU(GpuFenceWaitReason reason) noexcept
     result = this->FrameFence->SetEventOnCompletion(currentFenceValue, this->FrameFenceEvent);
     Platform::CheckHandle(result, "Failed to set event on frame fence");
 
-    WaitForSingleObjectEx(this->FrameFenceEvent, INFINITE, false);
+    WaitForSingleObjectEx(this->FrameFenceEvent, INFINITE, FALSE);
 
     this->FrameFenceValues[this->CurrentFrameBufferIndex]++;
 }
@@ -198,8 +205,8 @@ FrameMetadata *Renderer::BeginFrame()
     ComPtr<ID3D12CommandAllocator> commandAllocator = this->CommandAllocators[this->CurrentFrameBufferIndex];
     commandAllocator->Reset();
 
-    // Create new command list for frame
-    ComPtr<ID3D12GraphicsCommandList> commandList = this->CreateCommandList();
+    // Get command list
+    ComPtr<ID3D12GraphicsCommandList> commandList = this->CommandLists[this->CurrentFrameBufferIndex];
 
     // Reset command list and start recording
     commandList->Reset(commandAllocator.Get(), nullptr);
@@ -280,31 +287,8 @@ void Renderer::EndFrame(FrameMetadata *frameMetaData)
 
     this->IsFrameInFlight = false;
 
-    // Reset command list
-    commandList.Reset();
-
     // Delete frame metadata
     delete frameMetaData;
-}
-
-void Renderer::CreateWindowSizeDependentResources()
-{
-    if (!this->WindowHandle)
-    {
-        this->Logger->Fatal("Renderer::CreateWindowSizeDependentResources: Window handle is null");
-        return;
-    }
-
-    this->ShouldRender = false;
-    this->WaitForGPU(GpuFenceWaitReason::RenderBuffersSizeChange);
-
-    // Remove old render target views
-    this->CleanupRenderTargetViews();
-
-    if (this->SwapChain)
-    {
-        HRESULT result = this->SwapChain->ResizeBuffers(this->SwapChainBufferCount, this->FrameBufferWidth, this->FrameBufferHeight, this->FrameBufferFormat, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
-    }
 }
 
 void Renderer::Resize(UINT width, UINT height, BOOL minimized)
@@ -346,12 +330,12 @@ void Renderer::Resize(UINT width, UINT height, BOOL minimized)
     DXGI_SWAP_CHAIN_DESC1 swapChainDescription = {};
     this->SwapChain->GetDesc1(&swapChainDescription);
 
-#ifdef BUILD_TYPE_DEBUG
-    this->DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_SUMMARY | D3D12_RLDO_DETAIL);
-#endif
+    this->Logger->Message("Renderer::Resize: Resizing swap chain buffers");
 
-    HRESULT buffersResizeResult = this->SwapChain->ResizeBuffers(this->SwapChainBufferCount, width, height, this->FrameBufferFormat, swapChainDescription.Flags);
+    HRESULT buffersResizeResult = this->SwapChain->ResizeBuffers(this->SwapChainBufferCount, this->FrameBufferWidth, this->FrameBufferHeight, this->FrameBufferFormat, swapChainDescription.Flags);
     Platform::CheckHandle(buffersResizeResult, "Failed to resize swap chain buffers", true);
+
+    this->Logger->Message("Renderer::Resize: Swap chain buffers resized");
 
     // Update current frame buffer index, MUST be done before creating new render target views
     this->CurrentFrameBufferIndex = this->SwapChain->GetCurrentBackBufferIndex();
@@ -472,33 +456,32 @@ void Renderer::CreateCommandInterfaces()
     }
 }
 
-ComPtr<ID3D12GraphicsCommandList> Renderer::CreateCommandList()
+void Renderer::CreateCommandLists()
 {
-    ComPtr<ID3D12CommandAllocator> commandAllocator = this->CommandAllocators[this->CurrentFrameBufferIndex];
-
-    if (this->Device == nullptr || commandAllocator == nullptr)
+    if (this->Device == nullptr)
     {
-        this->Logger->Fatal("Renderer::CreateCommandList: Device or command allocator is null");
-        return nullptr;
+        this->Logger->Fatal("Renderer::CreateCommandList: Device is null");
+        return;
     }
 
-    // Create command list
-    ComPtr<ID3D12GraphicsCommandList> commandList = nullptr;
+    HRESULT result;
 
-    HRESULT result = this->Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList));
-    Platform::CheckHandle(result, "Failed to create command list");
+    for (UINT i = 0; i < this->SwapChainBufferCount; i++)
+    {
+        ComPtr<ID3D12CommandAllocator> commandAllocator = this->CommandAllocators[i];
 
-    // Close by default
-    commandList->Close();
+        result = this->Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&this->CommandLists[i]));
+        Platform::CheckHandle(result, "Failed to create command list");
+
+        // Close by default
+        this->CommandLists[i]->Close();
 
 #ifdef BUILD_TYPE_DEBUG
-    wchar_t name[25] = {};
-    swprintf_s(name, L"Command List %d", this->CommandListCounter);
-    commandList->SetName(name);
+        wchar_t name[25] = {};
+        swprintf_s(name, L"Command List %d", i);
+        this->CommandLists[i]->SetName(name);
 #endif
-
-    this->CommandListCounter++;
-    return commandList;
+    }
 }
 
 void Renderer::CreateSwapChain()
@@ -521,7 +504,6 @@ void Renderer::CreateSwapChain()
     swapChainDescription.SampleDesc.Count = 1; // No anti-aliasing
     swapChainDescription.SampleDesc.Quality = 0;
     swapChainDescription.Scaling = DXGI_SCALING_STRETCH;
-    swapChainDescription.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDescription.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
 
     DXGI_SWAP_CHAIN_FULLSCREEN_DESC swapChainFullScreenDescription = {0};
@@ -534,7 +516,7 @@ void Renderer::CreateSwapChain()
 
     if (FAILED(swapChain.As(&this->SwapChain)))
     {
-        this->Logger->Fatal("Renderer::CreateSwapChain: Failed to cast swap chain to IDXGISwapChain3");
+        this->Logger->Fatal("Renderer::CreateSwapChain: Failed to cast swap chain to IDXGISwapChain4");
         return;
     }
 
@@ -592,17 +574,17 @@ void Renderer::CreateRenderTargetViews()
         result = this->SwapChain->GetBuffer(i, IID_PPV_ARGS(&this->RenderTargets[i]));
         Platform::CheckHandle(result, "Failed to get swap chain buffer");
 
-        D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
-        rtvDesc.Format = this->FrameBufferFormat;
-        rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-
-        this->Device->CreateRenderTargetView(this->RenderTargets[i].Get(), &rtvDesc, rtvHandle);
-
 #ifdef BUILD_TYPE_DEBUG
         wchar_t name[25] = {};
         swprintf_s(name, L"RTV %u", i);
         this->RenderTargets[i]->SetName(name);
 #endif
+
+        D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+        rtvDesc.Format = this->FrameBufferFormat;
+        rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+
+        this->Device->CreateRenderTargetView(this->RenderTargets[i].Get(), &rtvDesc, rtvHandle);
     }
 }
 
