@@ -23,6 +23,12 @@ void Renderer::Shutdown()
     this->ShouldRender = false;
     this->WaitForGPU();
 
+    // Release resources
+    this->SwapChain.Reset();
+    this->Device.Reset();
+    this->Adapter.Reset();
+    this->DXGIFactory.Reset();
+
     // Cleanup
     this->CleanupRenderTargetViews();
 
@@ -39,8 +45,6 @@ void Renderer::Shutdown()
 
     this->RTVHeap.Reset();
     this->CommandQueue.Reset();
-    this->SwapChain.Reset();
-    this->Device.Reset();
 
 #ifdef BUILD_TYPE_DEBUG
     this->DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_SUMMARY | D3D12_RLDO_DETAIL);
