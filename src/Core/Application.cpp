@@ -90,18 +90,13 @@ LRESULT Application::HandleWindowMessage(HWND windowHandle, UINT messageId, WPAR
 
     case WM_SIZE:
     {
-        if (wParam == SIZE_MINIMIZED)
-        {
-            return 1;
-        }
-
         RECT clientRect = {};
         GetClientRect(windowHandle, &clientRect);
 
         UINT width = clientRect.right - clientRect.left;
         UINT height = clientRect.bottom - clientRect.top;
 
-        this->Window->OnSizeChange(width, height);
+        this->Window->OnSizeChange(width, height, wParam == SIZE_MINIMIZED);
 
         return 1;
     }

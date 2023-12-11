@@ -16,8 +16,9 @@ namespace Core
 
         struct Size
         {
-            int Width;
-            int Height;
+            unsigned int Width;
+            unsigned int Height;
+            bool IsMinimized : 1;
         } Size;
 
         Scene::SceneGraph *InitialSceneGraph;

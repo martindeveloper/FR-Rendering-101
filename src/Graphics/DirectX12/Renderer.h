@@ -127,8 +127,9 @@ namespace Graphics::DirectX12
          * @brief Resize swap chain
          * @param width
          * @param height
+         * @param minimized
          */
-        void Resize(UINT width, UINT height);
+        void Resize(UINT width, UINT height, BOOL minimized = FALSE);
 
         /**
          * @brief Get device

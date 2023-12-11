@@ -18,6 +18,7 @@ namespace Scene
         virtual void OnResourceCreate(Graphics::DirectX12::ResourcesInitializationMetadata *resourceMetadata) = 0;
         virtual void OnRender(Graphics::DirectX12::FrameMetadata *frameMetadata) = 0;
         virtual void OnUpdate(uint64_t frame) = 0;
+        virtual void OnShutdown() = 0;
     };
 }
 

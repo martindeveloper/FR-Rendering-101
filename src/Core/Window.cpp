@@ -39,13 +39,29 @@ void Window::OnCreate(HWND windowHandle)
 
 void Window::OnQuit()
 {
+    // Shutdown scene graph
+    if (this->SceneGraph != nullptr)
+    {
+        for (Scene::SceneNode *sceneNode : *this->SceneGraph)
+        {
+            sceneNode->OnShutdown();
+        }
+    }
+
+    // Shutdown renderer
     this->Renderer->Shutdown();
 
+    // Quit
     PostQuitMessage(0);
 }
 
 void Window::OnPaint()
 {
+    if (this->Properties->Size.IsMinimized)
+    {
+        return;
+    }
+
     Graphics::DirectX12::FrameMetadata *frameMetaData = this->Renderer->BeginFrame();
 
     if (this->SceneGraph != nullptr)
@@ -65,13 +81,14 @@ void Window::OnSetCursor()
     SetCursor(this->Properties->CursorHandle);
 }
 
-void Window::OnSizeChange(UINT width, UINT height)
+void Window::OnSizeChange(UINT width, UINT height, BOOL minimized)
 {
     this->Properties->Size.Width = width;
     this->Properties->Size.Height = height;
+    this->Properties->Size.IsMinimized = minimized;
 
     if (this->Renderer != nullptr)
     {
-        this->Renderer->Resize(width, height);
+        this->Renderer->Resize(width, height, minimized);
     }
 }

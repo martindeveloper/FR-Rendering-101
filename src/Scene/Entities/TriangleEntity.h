@@ -46,6 +46,7 @@ namespace Scene::Entities
         void OnResourceCreate(Graphics::DirectX12::ResourcesInitializationMetadata *resourceMetadata);
         void OnRender(Graphics::DirectX12::FrameMetadata *frameMetadata);
         void OnUpdate(uint64_t frame);
+        void OnShutdown();
 
     private:
         void CreateRootSignature(Microsoft::WRL::ComPtr<ID3D12Device> device);

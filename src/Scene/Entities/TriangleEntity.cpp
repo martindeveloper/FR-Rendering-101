@@ -9,8 +9,22 @@ TriangleEntity::TriangleEntity()
 
 TriangleEntity::~TriangleEntity()
 {
+    this->Logger->Message("TriangleEntity: Destructor");
+}
+
+void TriangleEntity::OnShutdown()
+{
+    this->Logger->Message("TriangleEntity: Shutdown");
+
     delete this->VertexShaderBlob;
     delete this->PixelShaderBlob;
+
+    //
+    this->RootSignature.Reset();
+    this->RootSignature = nullptr;
+
+    this->PipelineState.Reset();
+    this->PipelineState = nullptr;
 }
 
 void TriangleEntity::OnResourceCreate(Graphics::DirectX12::ResourcesInitializationMetadata *resourceMetadata)
@@ -86,12 +100,8 @@ void TriangleEntity::CreateRootSignature(Microsoft::WRL::ComPtr<ID3D12Device> de
     HRESULT result = D3D12SerializeRootSignature(&rootSignatureDescription, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
     Platform::CheckHandle(result, "Failed to serialize root signature");
 
-    Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature = nullptr;
-
-    result = device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+    result = device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&this->RootSignature));
     Platform::CheckHandle(result, "Failed to create root signature");
-
-    this->RootSignature = rootSignature.Detach();
 }
 
 void TriangleEntity::CreatePipelineState(Microsoft::WRL::ComPtr<ID3D12Device> device)
@@ -162,12 +172,8 @@ void TriangleEntity::CreatePipelineState(Microsoft::WRL::ComPtr<ID3D12Device> de
     pipelineStateDescription.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
     pipelineStateDescription.SampleDesc.Count = 1;
 
-    Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineState = nullptr;
-
-    HRESULT result = device->CreateGraphicsPipelineState(&pipelineStateDescription, IID_PPV_ARGS(&pipelineState));
+    HRESULT result = device->CreateGraphicsPipelineState(&pipelineStateDescription, IID_PPV_ARGS(&this->PipelineState));
     Platform::CheckHandle(result, "Failed to create pipeline state");
-
-    this->PipelineState = pipelineState.Detach();
 }
 
 void TriangleEntity::CreateShaders()
@@ -224,6 +230,10 @@ void TriangleEntity::CreateVertexBuffer(Microsoft::WRL::ComPtr<ID3D12Device> dev
     memcpy(vertexDataBegin, this->Vertices, sizeof(this->Vertices));
 
     this->VertexBuffer->Unmap(0, nullptr);
+
+#ifdef BUILD_TYPE_DEBUG
+    this->VertexBuffer->SetName(L"Triangle Vertex Buffer");
+#endif
 }
 
 void TriangleEntity::CreateConstantBuffers(Microsoft::WRL::ComPtr<ID3D12Device> device, UINT backBufferCount)
@@ -250,5 +260,11 @@ void TriangleEntity::CreateConstantBuffers(Microsoft::WRL::ComPtr<ID3D12Device> 
     for (UINT i = 0; i < backBufferCount; i++)
     {
         device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &constantBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&this->ConstantBuffers[i]));
+
+#ifdef BUILD_TYPE_DEBUG
+        wchar_t name[50];
+        swprintf_s(name, L"Triangle Constant Buffer %d", i);
+        this->ConstantBuffers[i]->SetName(name);
+#endif
     }
 }

@@ -29,7 +29,7 @@ namespace Core
         void OnQuit();
         void OnPaint();
         void OnSetCursor();
-        void OnSizeChange(UINT width, UINT height);
+        void OnSizeChange(UINT width, UINT height, BOOL minimized = FALSE);
     };
 }
 

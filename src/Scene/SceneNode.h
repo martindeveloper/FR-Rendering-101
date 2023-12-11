@@ -30,6 +30,22 @@ namespace Scene
         }
 
         /**
+         * Dispatch shutdown to the scene node.
+         */
+        void OnShutdown()
+        {
+            if (this->Entity)
+            {
+                this->Entity->OnShutdown();
+            }
+
+            for (Scene::SceneNode *child : this->Children)
+            {
+                child->OnShutdown();
+            }
+        }
+
+        /**
          * Update the scene node.
          * @param frame The current frame.
          */

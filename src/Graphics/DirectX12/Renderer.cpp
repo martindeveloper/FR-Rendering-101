@@ -12,29 +12,41 @@ Renderer::Renderer()
 
 Renderer::~Renderer()
 {
-    // No extra need to manually release resources because of ComPtr
-    CloseHandle(this->FrameFenceEvent);
-
-    this->UnloadDiagnosticsModules();
-
-#ifdef BUILD_TYPE_DEBUG
-    this->DebugInterface.Reset();
-    this->DebugDevice.Reset();
-#endif
+    this->Logger->Message("Renderer::~Renderer: Renderer destroyed");
 }
 
 void Renderer::Shutdown()
 {
-    this->ShouldRender = false;
+    this->Logger->Message("Renderer::Shutdown: Renderer shutdown");
 
+    // Wait for GPU to finish
+    this->ShouldRender = false;
     this->WaitForGPU();
 
+    // Cleanup
     this->CleanupRenderTargetViews();
 
-    this->Logger->Message("Renderer::Shutdown: Renderer shutdown");
+    CloseHandle(this->FrameFenceEvent);
+
+    this->UnloadDiagnosticsModules();
+
+    this->FrameFence.Reset();
+
+    for (UINT i = 0; i < this->SwapChainBufferCount; i++)
+    {
+        this->CommandAllocators[i].Reset();
+    }
+
+    this->RTVHeap.Reset();
+    this->CommandQueue.Reset();
+    this->SwapChain.Reset();
+    this->Device.Reset();
 
 #ifdef BUILD_TYPE_DEBUG
     this->DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_SUMMARY | D3D12_RLDO_DETAIL);
+
+    this->DebugInterface.Reset();
+    this->DebugDevice.Reset();
 #endif
 }
 
@@ -252,11 +264,20 @@ void Renderer::EndFrame(FrameMetadata *frameMetaData)
     delete frameMetaData;
 }
 
-void Renderer::Resize(UINT width, UINT height)
+void Renderer::Resize(UINT width, UINT height, BOOL minimized)
 {
     if (this->SwapChain == nullptr)
     {
         this->Logger->Fatal("Renderer::Resize: Swap chain is null");
+        return;
+    }
+
+    // Don't render if window is minimized
+    this->ShouldRender = !minimized;
+
+    if (minimized)
+    {
+        this->Logger->Message("Renderer::Resize: Window is minimized");
         return;
     }
 
@@ -393,17 +414,21 @@ void Renderer::CreateCommandInterfaces()
     result = this->Device->CreateCommandQueue(&queueDescription, IID_PPV_ARGS(&this->CommandQueue));
     Platform::CheckHandle(result, "Failed to create command queue");
 
+#ifdef BUILD_TYPE_DEBUG
     this->CommandQueue->SetName(L"Command Queue Primary");
+#endif
 
     for (UINT i = 0; i < this->SwapChainBufferCount; i++)
     {
-        wchar_t name[25] = {};
-        swprintf_s(name, L"Command Allocator %d", i);
 
         result = this->Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&this->CommandAllocators[i]));
         Platform::CheckHandle(result, "Failed to create command allocator");
 
+#ifdef BUILD_TYPE_DEBUG
+        wchar_t name[25] = {};
+        swprintf_s(name, L"Command Allocator %d", i);
         this->CommandAllocators[i]->SetName(name);
+#endif
     }
 }
 
@@ -529,10 +554,11 @@ void Renderer::CreateRenderTargetViews()
 
         this->Device->CreateRenderTargetView(this->RenderTargets[i].Get(), &rtvDesc, rtvHandle);
 
-        // Set name with index for debugging
+#ifdef BUILD_TYPE_DEBUG
         wchar_t name[25] = {};
         swprintf_s(name, L"RTV %u", i);
         this->RenderTargets[i]->SetName(name);
+#endif
 
         rtvHandle.ptr += rtvDescriptorSize;
     }
