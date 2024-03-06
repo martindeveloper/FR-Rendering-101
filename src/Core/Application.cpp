@@ -100,6 +100,7 @@ LRESULT Application::HandleWindowMessage(HWND windowHandle, UINT messageId, WPAR
 
         return 1;
     }
+    break;
 
     case WM_SETCURSOR:
     {

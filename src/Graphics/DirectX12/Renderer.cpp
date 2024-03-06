@@ -96,6 +96,12 @@ void Renderer::LoadDiagnosticsModule(Graphics::DirectX12::DiagnosticModule modul
 #endif
     }
 
+    if (diagnosticsModulePath == nullptr)
+    {
+        this->Logger->Fatal("Renderer::LoadDiagnosticsModule: Diagnostics module path is null");
+        return;
+    }
+
     diagnosticsModule = LoadLibraryA(diagnosticsModulePath);
 
     if (diagnosticsModule == nullptr)

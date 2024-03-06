@@ -149,6 +149,8 @@ namespace Graphics::DirectX12
         void CreateCommandLists();
         D3D12_RESOURCE_BARRIER CreateTransitionBarrier(ComPtr<ID3D12Resource> resource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after);
 
+        DXGI_FORMAT GetFrameBufferFormat() const { return this->FrameBufferFormat; };
+
         // Frame
         void CreateFrameFence();
 

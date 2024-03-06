@@ -14,8 +14,8 @@ namespace Graphics::DirectX12
      */
     struct FrameMetadata
     {
-        UINT Frame;
-        UINT CurrentBackBufferIndex;
+        UINT Frame = 0;
+        UINT CurrentBackBufferIndex = 0;
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> CommandList;
     };
 }
